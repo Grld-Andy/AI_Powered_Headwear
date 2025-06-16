@@ -1,0 +1,46 @@
+\section{System Integration}
+
+	The system integrates multiple AI models into a unified, offline processing pipeline designed for real-time assistive interaction. Each model plays a specific role, coordinated through a Python-based state machine to ensure seamless transitions between operational states.
+
+	\subsection{Operational Workflow}
+	The runtime behavior of the system follows a structured sequence:
+
+	\begin{enumerate}[label=\roman*.]
+		\item \textit{Initial Language Selection}: Upon first startup, the system enters a language selection phase. An audio prompt is played, requesting the user to respond in their preferred language. The audio command classifier is activated to identify the spoken language. If no language is detected within 15 seconds, English is automatically selected as the default.
+
+		\item \textit{Default State – Object Detection}: Once the device is operational, it defaults to object detection mode. Concurrently, the wake word classifier runs in a separate thread, continuously monitoring for the activation phrase 'Hello K2.'
+
+		\item \textit{Text Recognition Mode}: If the user wishes to read a text, they activate the wake word followed by the command 'read this'. The audio command classifier processes this instruction and transitions the system into text recognition mode. The camera captures the text, which is processed by Tesseract OCR. The resulting text is converted into speech via the PiperTTS engine and played back to the user. After playback, the system automatically returns to object detection mode.
+
+		\item \textit{Dynamic Object Awareness}: In object detection mode, detected objects are further analyzed using the Midas Nano model for depth estimation. If an object is identified as being in close proximity, its label is passed to the PiperTTS engine, which generates audio feedback to alert the user about the nearby object(s).
+
+		\item \textit{Pause Mode}: The user can suspend all functionality (except wake word detection) by activating the wake word and issuing the command 'pause'. This halts ongoing tasks to conserve power. If 'pause' is invoked during text recognition mode, the system first switches back to object detection mode before entering pause mode.
+
+		\item \textit{Resuming Operation}: To resume operation, the user activates the wake word and says 'start'. This command reactivates object detection mode, restoring the system's default functionality.
+
+		\item \textit{Location Query}: To determine their current location, the user says 'where am I' after activating the wake word. The system retrieves the device's current location and uses PiperTTS to audibly communicate this information to the user.
+	\end{enumerate}
+
+	\subsection{Model Coordination}
+	The system leverages a state machine architecture to manage transitions between states based on user input. Model responsibilities are distributed as follows:
+	\begin{enumerate}[label=\roman*.]
+		\item \textit{Wake Word Classifier}: Continuously listens for the activation phrase 'Hello K2'.
+		\item \textit{Audio Command Classifier}: Classifies user commands post-activation to determine appropriate actions.
+		\item \textit{YOLOv5n}: Performs object detection in real time.
+		\item \textit{Midas Nano}: Estimates object depth to assess proximity.
+		\item \textit{Tesseract}: Extracts text from images during OCR mode.
+		\item \textit{PiperTTS}: Converts system outputs into speech for user feedback.
+	\end{enumerate}
+
+	\subsection{Sequential Execution}
+	To optimize system performance and manage limited computational resources, tasks are executed sequentially. The wake word detector remains active across all modes, while other models are dynamically loaded and invoked as needed. This approach maintains responsiveness while minimizing system load.
+
+	\subsection{Offline Operation}
+	All components, including models, language files, and dependencies, are stored locally. The system operates entirely offline, ensuring reliability in environments without internet connectivity.
+
+	\begin{figure}[h]
+		\centering
+		\caption{Model Interaction Flowchart}
+		\label{fig:model_flow}
+		\textit{Placeholder}: Insert a diagram showing system startup, language detection, default object detection mode, transitions to OCR, pause/resume functions, and location/audio feedback, all triggered by the wake word and audio command classifier.
+	\end{figure}

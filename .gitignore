@@ -1,0 +1,25 @@
+.env
+/audio_capture
+/data
+/models
+/yolov5
+**/*.wav
+# Ignore Python cache files
+*.py[cod]
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints
+# Ignore virtual environment directories
+venv/
+# Ignore logs
+logs/
+# Ignore backup files
+*.bak
+# Ignore system files
+.DS_Store
+# Ignore coverage reports
+.coverage
+# Ignore IDE specific files
+.idea/
+# Ignore Python bytecode files
+*.pyc
+**/__pycache__/

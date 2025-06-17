@@ -1,18 +1,20 @@
 import requests
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Constants
 GHANA_NLP_API = os.getenv("GHANA_NLP_API")
+print(GHANA_NLP_API)
 TTS_URL = "https://translation-api.ghananlp.org/tts/v1/synthesize"
 
 
 def synthesize_speech(
-    text: str,
-    language: str = "tw",
-    speaker_id: str = "twi_speaker_4",
-    output_filename: str = "output.wav"
+        text: str,
+        language: str = "tw",
+        speaker_id: str = "twi_speaker_4",
+        output_filename: str = "output.wav"
 ) -> bool:
     """
     Synthesizes speech using the GhanaNLP TTS API and saves it as an audio file.
@@ -26,8 +28,13 @@ def synthesize_speech(
     Returns:
         bool: True if audio was saved successfully, False otherwise.
     """
+    if not GHANA_NLP_API:
+        print("❌ Missing GHANA_NLP_API key in .env file")
+        return False
+
     headers = {
         "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
         "Ocp-Apim-Subscription-Key": GHANA_NLP_API
     }
 
@@ -47,12 +54,16 @@ def synthesize_speech(
             return True
         else:
             print(f"❌ Request failed with status {response.status_code}")
-            print("Message:", response.text)
+            print("Response:", response.text)
             return False
-    except Exception as e:
-        print("❌ Exception occurred:", str(e))
+    except requests.exceptions.RequestException as e:
+        print("❌ Request exception occurred:", str(e))
         return False
 
 
-# Example usage
-synthesize_speech("Ɛte sɛn?", language="tw", speaker_id="twi_speaker_4")
+synthesize_speech(
+    text="Wo ho te sɛn?",
+    language="tw",
+    speaker_id="twi_speaker_4",
+    output_filename="wo_ho_te_sen.wav"
+)

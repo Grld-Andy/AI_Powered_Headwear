@@ -21,7 +21,55 @@ COMMAND_SECONDS = 2
 N_MFCC = 40
 MAX_TIMESTEPS = 100
 LANG_AUDIO_FILE = "./data/audio_capture/lang_command.wav"
-training_phrases = [
+twi_training_phrases = [
+    # reading
+    ["Wobɛtumi akyerɛw eyi?", "Kyerɛw nsɛm a ɛwɔ skrini no so", "Ɛka sɛn?", "Kyerɛw label yi ma me"],
+
+    # stop
+    ["Gyina biribiara", "Pa ɔsistem no so", "Twi assistant no so", "Gyina adwuma biara a rekɔ so"],
+
+    # start
+    ["Hyɛ ase hu adeɛ a ɛda hɔ", "Dɛn na ɛwɔ me anim?", "Dɛn na ɛbɛn me?", "Hwɛ mmerɛ so", "Hunuu nneɛma a ɛbɛn me"],
+
+    # count
+    ["Sikasɛm yi dodow bɛn?", "Kan sika no", "Mede bɛn na mewɔ?", "Ka kyerɛ me sɛ eyi yɛ sika ahe?"],
+
+    # reset
+    ["Sesaa kasa", "San yɛ sistem no foforɔ", "Hyɛ ase setup bio", "Fa kasa foforɔ"],
+
+    # current_location
+    ["Ɛhe na mewɔ?", "Ɛhe na mewɔ seesei?", "Ka kyerɛ me me baabi a mewɔ", "Ma me me baabi a mewɔ"],
+
+    # navigate
+    ["Fa me kɔ mall no", "Mepɛ kwan a ɛkɔ ayaresabea no so", "Ɛkwan bɛn so na metumi kɔ train station no?",
+     "Ma kwan so kɔ pharmacy no"],
+
+    # bookmark_location
+    ["Sie baabi yi", "Kae me baabi a mewɔ", "Mark baabi yi", "Na baabi yi ho no ho"],
+
+    # save_contact
+    ["Sie contact foforɔ bi", "Fa John to me contacts mu", "Kae saa phone number yi", "Sie contact ma me"],
+
+    # send_money
+    ["Som sika kɔ maa Sarah", "Fa sika kɔ me yɔnko anim", "Yɛ mobile payment", "Tua obi sika seesei"],
+
+    # time
+    ["Ɛberɛ bɛn na ɛreba so?", "Ka kyerɛ me bere a ɛyɛ seesei", "Ɛberɛ bɛn seesei?", "Ma me bere no"],
+
+    # hotspots
+    ["Hwehwɛ adidibea a ɛbɛn hɔ", "Kyerɛ mmeaeɛ a ɛbɛn me", "Dɛn na ɛbɛn ha?", "Kyerɛ hotspots a ɛbɛn ha"],
+
+    # chat (fallback/general)
+    ["Dɛn na wokotumi yɛ?", "Wote sɛn ɛnnɛ?", "Ka biribi a eye ho asɛe", "Ma yɛnkasa", "Wobɛtumi aboa me?"],
+
+    # shutdown
+    ["Gyaade device no so", "Twi sistem no so", "Gyina power so", "Gyaade seesei"],
+
+    # background
+    ["Mmɛhwɛ haw", "Hwee nni ha", "Background", "Mente ase"]
+]
+
+english_training_phrases = [
     # reading
     "can you read this", "read the text on the screen", "what does it say", "read this label for me",
     # stop
@@ -53,6 +101,7 @@ training_phrases = [
     # background
     "random noise", "nothing here", "background", "i dont understand"
 ]
+training_phrases = english_training_phrases
 command_labels = [
     "reading", "reading", "reading", "reading", "stop", "stop", "stop", "stop", "start",
     "start", "start", "start", "start", "count", "count", "count", "count", "reset",

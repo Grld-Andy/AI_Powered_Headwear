@@ -13,8 +13,9 @@ from core.nlp.intent_classifier import CommandClassifier
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from config.settings import (
-    LANG_MODEL_PATH, N_MFCC, MAX_TIMESTEPS, COMMAND_CLASSES, command_labels, training_phrases
+    LANG_MODEL_PATH, N_MFCC, MAX_TIMESTEPS, COMMAND_CLASSES, command_labels, training_phrases, SELECTED_LANGUAGE
 )
+from twi_stuff.twi_recognition import record_and_transcribe
 
 # Audio event globals
 tts_lock = threading.Lock()
@@ -147,8 +148,12 @@ def listen_and_save(audio_path, duration):
 
 
 def predict_command(audio_path, duration=2):
-    transcribed_text = listen_and_save(audio_path, duration)
+    if SELECTED_LANGUAGE == 'twi':
+        transcribed_text = record_and_transcribe()
+    else:
+        transcribed_text = listen_and_save(audio_path, duration)
 
+    print(training_phrases[0])
     classifier = CommandClassifier(training_phrases, command_labels)
     predicted_label = classifier.classify(transcribed_text)
     print(f"🔮 Predicted Class: {predicted_label}")

@@ -80,13 +80,16 @@ def announce_detected_objects(language, objects, volume=0.5):
         wav_files.append(f"{translated_labels}{kind}.wav")
         wav_files.append(f"{translated_numbers}{count}.wav")
 
+    sentence = ", ".join(parts[:-1]) + ", and " + parts[-1] if len(parts) > 1 else parts[0]
+    sentence += " in front of you"
+
     if language == 'twi':
         if not wakeword_detected.is_set():
             print(f"{translated_phrases}in front of you")
-            wav_files.append(f"{translated_phrases}in front of you.wav")
+            # wav_files.append(f"{translated_phrases}in front of you.wav")
             threading.Thread(
                 target=translate_and_play,
-                args=(wav_files,),
+                args=(sentence,),
                 kwargs={'wait_for_completion': False},
                 daemon=True
             ).start()
@@ -98,8 +101,6 @@ def announce_detected_objects(language, objects, volume=0.5):
             # ).start()
     else:
         if not wakeword_detected.is_set():
-            sentence = ", ".join(parts[:-1]) + ", and " + parts[-1] if len(parts) > 1 else parts[0]
-            sentence += " in front of you"
             print(sentence)
             threading.Thread(
                 target=send_text_to_tts,

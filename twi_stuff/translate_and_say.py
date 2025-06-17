@@ -6,7 +6,7 @@ import os
 
 
 def translate_and_play(text, wait_for_completion=False):
-    safe_filename = f"{text}.wav".replace(" ", "_").lower()
+    safe_filename = f"data/twi/{text}.wav".replace(" ", "_").lower()
 
     if os.path.exists(safe_filename):
         play_audio_winsound(safe_filename, wait_for_completion)

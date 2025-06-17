@@ -134,5 +134,5 @@ cap = cv2.VideoCapture(0)
 # State variables
 wakeword_detected = threading.Event()
 awaiting_command = False
-current_mode = "start"
+current_mode = "stop"
 DATABASE = 'database.db'

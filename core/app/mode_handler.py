@@ -33,7 +33,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
     latest['language'] = language
 
     # Start vision background mode if not in "start"
-    if current_mode != "start" and (vision_thread is None or not vision_thread.is_alive()):
+    if current_mode not in ("start", "stop") and (vision_thread is None or not vision_thread.is_alive()):
         stop_vision.clear()
         vision_thread = threading.Thread(
             target=run_background_vision,

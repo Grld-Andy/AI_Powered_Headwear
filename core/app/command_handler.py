@@ -2,6 +2,7 @@ from core.audio.audio_capture import play_audio_winsound, predict_command
 from core.tts.piper import send_text_to_tts
 from config.settings import translated_phrases, COMMAND_CLASSES
 from twi_stuff.translate_and_say import translate_and_play
+from twi_stuff.twi_recognition import record_and_transcribe
 
 
 def handle_command(language):

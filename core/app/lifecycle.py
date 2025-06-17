@@ -28,7 +28,7 @@ def initialize_app():
     global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL, cap
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     SELECTED_LANGUAGE = detect_or_load_language()
-    print("Selected language: ", SELECTED_LANGUAGE)
+    print("Selected language:", SELECTED_LANGUAGE)
     if SELECTED_LANGUAGE == "english":
         speak("Hello")
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")

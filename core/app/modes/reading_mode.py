@@ -20,9 +20,7 @@ def handle_reading_mode(frame, language, frozen_frame):
 
         if text:
             if language == 'twi':
-                translate_and_play(f"start reading", wait_for_completion=True)
-                translate_and_play(f"text", wait_for_completion=True)
-                translate_and_play(f"done reading", wait_for_completion=True)
+                translate_and_play(f"start reading. {text}. done reading.", wait_for_completion=True)
                 # play_audio_winsound(f"{translated_phrases}start reading.wav", wait_for_completion=True)
                 # send_text_to_tts(text, wait_for_completion=True)
                 # play_audio_winsound(f"{translated_phrases}done reading.wav", wait_for_completion=True)

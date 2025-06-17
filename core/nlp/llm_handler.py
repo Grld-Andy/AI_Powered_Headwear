@@ -1,6 +1,11 @@
 import httpx
-# import speech_recognition as sr
-# from core.tts.piper import send_text_to_tts
+import speech_recognition as sr
+
+from config.settings import SELECTED_LANGUAGE
+from core.nlp.llm_together_ai import chat_with_together
+from core.tts.piper import send_text_to_tts
+from twi_stuff.eng_to_twi import translate_text
+from twi_stuff.translate_and_say import translate_and_play
 
 # ----------- Configuration ------------
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -44,38 +49,44 @@ def warm_up_tinyllama(model: str = MODEL_NAME):
         print("Failed to warm up TinyLlama:", e)
 
 
-warm_up_tinyllama()
+# warm_up_tinyllama()
 
-# Optional: preload model into memory
-llama = TinyLlamaClient()
-prompt = "where is tarkwa?"
-new_response = llama.send_prompt(prompt)
-print("TinyLlama Response:\n", new_response)
-llama.close()
+# # Optional: preload model into memory
+# llama = TinyLlamaClient()
+# prompt = "where is tarkwa?"
+# new_response = llama.send_prompt(prompt)
+# print("TinyLlama Response:\n", new_response)
+# llama.close()
 
-#
-# def handle_chat_mode(duration: int = 2) -> str:
-#     recognizer = sr.Recognizer()
-#
-#     with sr.Microphone() as source:
-#         print("🎤 Listening for chat prompt...")
-#         recognizer.adjust_for_ambient_noise(source, duration=0.5)
-#         audio = recognizer.listen(source, phrase_time_limit=duration)
-#
-#     try:
-#         # Transcribe using Google
-#         transcribed_text = recognizer.recognize_google(audio)
-#         print(f"🗣️ User said: {transcribed_text}")
-#
-#         # Send to TinyLlama
-#         tiny_llama = TinyLlamaClient()
-#         response = tiny_llama.send_prompt(transcribed_text)
-#         tiny_llama.close()
-#
-#         send_text_to_tts(response, wait_for_completion=True, priority=0)
-#         return response
-#
-#     except sr.UnknownValueError:
-#         return "Sorry, I couldn't understand what you said."
-#     except sr.RequestError as e:
-#         return f"Speech recognition error: {e}"
+
+def handle_chat_mode(duration: int = 2) -> str:
+    recognizer = sr.Recognizer()
+
+    with sr.Microphone() as source:
+        print("🎤 Listening for chat prompt...")
+        recognizer.adjust_for_ambient_noise(source, duration=0.5)
+        audio = recognizer.listen(source, phrase_time_limit=duration)
+
+    try:
+        # Transcribe using Google
+        transcribed_text = recognizer.recognize_google(audio)
+        print(f"🗣️ User said: {transcribed_text}")
+
+        # # Send to TinyLlama
+        # tiny_llama = TinyLlamaClient()
+        # response = tiny_llama.send_prompt(transcribed_text)
+        # tiny_llama.close()
+
+        response = chat_with_together(transcribed_text)
+
+        if SELECTED_LANGUAGE == 'twi':
+            translated_text = translate_text(transcribed_text, "en-tw")
+            translate_and_play(translated_text, wait_for_completion=True)
+        else:
+            send_text_to_tts(response, wait_for_completion=True, priority=0)
+        return response
+
+    except sr.UnknownValueError:
+        return "Sorry, I couldn't understand what you said."
+    except sr.RequestError as e:
+        return f"Speech recognition error: {e}"

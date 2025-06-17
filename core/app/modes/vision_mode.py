@@ -1,5 +1,3 @@
-# core/app/modes/vision_mode.py
-
 import threading
 import cv2
 import time

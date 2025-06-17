@@ -1,9 +1,8 @@
-# core/app/mode_handler.py
-
 import threading
 from core.app.modes.currency_mode import handle_currency_mode
 from core.app.modes.current_time_mode import get_current_time
-from core.app.modes.digital_services_mode.mobile_network import handle_save_contact_mode, handle_send_money_mode
+from core.app.modes.digital_services_mode.mobile_network import handle_save_contact_mode, handle_send_money_mode, \
+    handle_get_contact_mode
 from core.app.modes.passive_camera_mode import handle_stop_mode
 from core.app.modes.vision_mode import handle_vision_mode, run_background_vision, stop_vision
 from core.app.modes.reading_mode import handle_reading_mode
@@ -64,8 +63,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "start"
 
     elif current_mode == "chat":
-        response = handle_chat_mode()
-        return frame, "start"
+        handle_chat_mode()
+        return frame, "chat"
 
     elif current_mode == "time":
         get_current_time()
@@ -73,6 +72,10 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "save_contact":
         handle_save_contact_mode(transcribed_text)
+        return frame, "start"
+
+    elif current_mode == 'get_contact':
+        handle_get_contact_mode()
         return frame, "start"
 
     elif current_mode == "send_money":

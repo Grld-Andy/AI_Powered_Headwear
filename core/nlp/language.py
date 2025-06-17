@@ -12,10 +12,6 @@ def detect_or_load_language():
     lang = get_saved_language()
     # lang = ""
     if lang:
-        if lang == 'twi':
-            settings.training_phrases = settings.twi_training_phrases
-        else:
-            settings.training_phrases = settings.english_training_phrases
         return lang
     else:
         return set_preferred_language()
@@ -28,11 +24,9 @@ def set_preferred_language():
         # play_audio_winsound(f"./{settings.translated_phrases}what language do you prefer.wav", wait_for_completion=True)
     else:
         if settings.SELECTED_LANGUAGE == 'twi':
-            settings.training_phrases = settings.twi_training_phrases
             translate_and_play("what language do you prefer", wait_for_completion=True)
             # play_audio_winsound(f'{settings.translated_phrases}what language do you prefer.wav', wait_for_completion=True)
         else:
-            settings.training_phrases = settings.english_training_phrases
             send_text_to_tts("Please say your preferred language.", wait_for_completion=True)
 
     try:

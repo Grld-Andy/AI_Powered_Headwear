@@ -12,7 +12,7 @@ def handle_command(language):
     else:
         send_text_to_tts("Hi, how may I help you?", wait_for_completion=True, priority=1)
 
-    command, transcribed_text = predict_command("audio_capture/user_command.wav")
+    command, transcribed_text = predict_command("audio_capture/user_command.wav", language)
 
     if command != "background":
         confirm_command(language, command)

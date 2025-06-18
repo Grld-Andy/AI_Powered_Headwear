@@ -40,6 +40,6 @@ def translate_text(text: str, lang: str = "en-tw") -> str:
         return f"Exception occurred: {str(e)}"
 
 
-# Example usage
-translated = translate_text("Good morning", "en-tw")
-print("Translated:", translated)
+# # Example usage
+# translated = translate_text("Good morning", "en-tw")
+# print("Translated:", translated)

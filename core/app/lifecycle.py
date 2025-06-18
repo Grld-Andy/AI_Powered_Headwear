@@ -9,6 +9,7 @@ from core.socket.listen_wakeword import listen_wakeword_socket
 from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
 from core.tts.python_ttsx3 import speak
+from twi_stuff.translate_and_say import translate_and_play
 
 # Global state variables
 awaiting_command = False
@@ -31,6 +32,9 @@ def initialize_app():
     print("Selected language:", SELECTED_LANGUAGE)
     if SELECTED_LANGUAGE == "english":
         speak("Hello")
+    elif SELECTED_LANGUAGE == "twi":
+        translate_and_play("Hello", wait_for_completion=True)
+
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
     cap = cv2.VideoCapture(0)
     threading.Thread(target=listen_wakeword_socket, daemon=True).start()

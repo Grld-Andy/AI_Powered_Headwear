@@ -10,7 +10,6 @@ from pydub import AudioSegment
 from scipy.io.wavfile import write
 import speech_recognition as sr
 
-from core.app.lifecycle import SELECTED_LANGUAGE
 from core.nlp.intent_classifier import CommandClassifier
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -150,10 +149,10 @@ def listen_and_save(audio_path, duration):
         return None
 
 
-def predict_command(audio_path, duration=2):
+def predict_command(audio_path, language, duration=2):
     transcribed_text = ""
-    print(f'the selected language is {SELECTED_LANGUAGE}')
-    if SELECTED_LANGUAGE == 'twi':
+    print(f'the selected language is {language}')
+    if language == 'twi':
         transcribed_text = record_and_transcribe()
         transcribed_text = translate_text(transcribed_text, lang="tw-en")
         print(transcribed_text)

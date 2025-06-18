@@ -1,12 +1,10 @@
 import requests
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
 # Constants
 GHANA_NLP_API = os.getenv("GHANA_NLP_API")
-print(GHANA_NLP_API)
 TTS_URL = "https://translation-api.ghananlp.org/tts/v1/synthesize"
 
 
@@ -60,10 +58,3 @@ def synthesize_speech(
         print("❌ Request exception occurred:", str(e))
         return False
 
-
-synthesize_speech(
-    text="Wo ho te sɛn?",
-    language="tw",
-    speaker_id="twi_speaker_4",
-    output_filename="wo_ho_te_sen.wav"
-)

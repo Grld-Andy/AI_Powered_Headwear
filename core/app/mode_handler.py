@@ -18,6 +18,19 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
                  cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text):
     global vision_thread
 
+    # Skip starting vision thread if in 'start' or 'stop' mode
+    if current_mode in ("start", "stop"):
+        if vision_thread and vision_thread.is_alive():
+            stop_vision.set()
+            vision_thread.join()
+        if current_mode == "start":
+            return handle_vision_mode(frame, language, last_frame_time, last_depth_time,
+                                      cached_depth_vis, cached_depth_raw, volume=1.0), current_mode
+        elif current_mode == "stop":
+            return handle_stop_mode(frame), current_mode
+
+    # --- Everything else continues below ---
+
     # Helpers to safely pass latest frame and language to background vision
     latest = {'frame': frame, 'language': language}
 
@@ -31,8 +44,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
     latest['frame'] = frame
     latest['language'] = language
 
-    # Start vision background mode if not in "start"
-    if current_mode not in ("start", "stop") and (vision_thread is None or not vision_thread.is_alive()):
+    # Start vision background mode (only for other modes)
+    if vision_thread is None or not vision_thread.is_alive():
         stop_vision.clear()
         vision_thread = threading.Thread(
             target=run_background_vision,
@@ -41,15 +54,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         )
         vision_thread.start()
 
-    # Stop vision background mode if we're back to "start"
-    if current_mode == "start":
-        if vision_thread and vision_thread.is_alive():
-            stop_vision.set()
-            vision_thread.join()
-        return handle_vision_mode(frame, language, last_frame_time, last_depth_time,
-                                  cached_depth_vis, cached_depth_raw, volume=1.0), current_mode
-
-    elif current_mode == "count":
+    # Handle other modes
+    if current_mode == "count":
         return handle_currency_mode(frame, language), "start"
 
     elif current_mode == "reading":
@@ -86,9 +92,6 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         speak("Shutting down the device now.")
         # os.system("sudo shutdown now")
         return frozen_frame, "shutdown"
-
-    elif current_mode == "stop":
-        return handle_stop_mode(frame), current_mode
 
     elif current_mode == "volume_up":
         increase_volume()

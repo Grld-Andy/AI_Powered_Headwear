@@ -9,13 +9,13 @@ import sounddevice as sd
 from pydub import AudioSegment
 from scipy.io.wavfile import write
 import speech_recognition as sr
-
 from core.nlp.intent_classifier import CommandClassifier
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from config.settings import (
     LANG_MODEL_PATH, N_MFCC, MAX_TIMESTEPS, COMMAND_CLASSES, command_labels, training_phrases
 )
+from core.tts.python_ttsx3 import speak
 from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.twi_recognition import record_and_transcribe
 
@@ -78,7 +78,7 @@ def combine_audio_files(file_list, output_path="./data/audio_capture/combined_au
         tts_lock.release()
 
 
-def record_audio(path, duration=2, fs=22050):
+def record_audio(path, duration=3, fs=22050):
     audio = sd.rec(int(duration * fs), samplerate=fs, channels=1)
     sd.wait()
     write(path, fs, audio)
@@ -124,34 +124,38 @@ def listen():
         return None
 
 
-def listen_and_save(audio_path, duration):
+def listen_and_save(audio_path, duration, i=0):
     recognizer = sr.Recognizer()
 
     with sr.Microphone() as source:
-        print("Adjusting for ambient noise...")
         recognizer.adjust_for_ambient_noise(source)
-        print(f"Recording for {duration} seconds...")
+        print(f"Listening... Please speak clearly. Recording for {duration} seconds.")
         audio_data = recognizer.record(source, duration=duration)
 
     with open(audio_path, "wb") as f:
         f.write(audio_data.get_wav_data())
 
     try:
-        print("Transcribing...")
+        print("📝 Transcribing...")
         transcribed_text = recognizer.recognize_google(audio_data)
         print(f"🗣 Transcribed Text: '{transcribed_text}'")
         return transcribed_text
     except sr.UnknownValueError:
         print("Could not understand audio.")
-        return None
+        if i < 2:
+            speak("I didn't get that. Could you please try again?")
+            return listen_and_save(audio_path, duration, i=i + 1)
+        else:
+            speak("Sorry, I'm still having trouble understanding you.")
+            return ""
     except sr.RequestError as e:
         print(f"Google request failed: {e}")
-        return None
+        speak("Please check your network connection and try again.")
+        return ""
 
 
 def predict_command(audio_path, language, duration=2):
     transcribed_text = ""
-    print(f'the selected language is {language}')
     if language == 'twi':
         transcribed_text = record_and_transcribe()
         transcribed_text = translate_text(transcribed_text, lang="tw-en")
@@ -159,7 +163,9 @@ def predict_command(audio_path, language, duration=2):
     else:
         transcribed_text = listen_and_save(audio_path, duration)
 
-    print(training_phrases[0])
+    if transcribed_text == "":
+        return "background", transcribed_text
+
     classifier = CommandClassifier(training_phrases, command_labels)
     predicted_label = classifier.classify(transcribed_text)
     print(f"🔮 Predicted Class: {predicted_label}")

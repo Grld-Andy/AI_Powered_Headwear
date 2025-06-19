@@ -12,7 +12,7 @@ GHANA_NLP_API = os.getenv("GHANA_NLP_API")
 ASR_URL = "https://translation-api.ghananlp.org/asr/v1/transcribe"
 
 
-def record_audio(filename="sample.wav", duration=2, fs=44100):
+def record_audio(filename="data/twi_audio.wav", duration=2, fs=44100):
     print(f"🎙️ Recording for {duration} seconds...")
     audio = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
     sd.wait()  # Wait until recording is finished
@@ -20,7 +20,7 @@ def record_audio(filename="sample.wav", duration=2, fs=44100):
     print(f"💾 Audio saved to {filename}")
 
 
-def convert_wav_to_mp3(wav_file="sample.wav", mp3_file="sample.mp3"):
+def convert_wav_to_mp3(wav_file="data/twi_audio.wav", mp3_file="data/twi_audio.mp3"):
     audio = AudioSegment.from_wav(wav_file)
     audio.export(mp3_file, format="mp3")
     print(f"🔄 Converted to {mp3_file}")
@@ -57,8 +57,8 @@ def transcribe_audio(file_path: str, language: str = "tw") -> str:
 
 
 def record_and_transcribe(language="tw", duration=4):
-    wav_file = "sample.wav"
-    mp3_file = "sample.mp3"
+    wav_file = "data/twi_audio.wav"
+    mp3_file = "data/twi_audio.mp3"
     record_audio(wav_file, duration)
     convert_wav_to_mp3(wav_file, mp3_file)
     return transcribe_audio(mp3_file, language)

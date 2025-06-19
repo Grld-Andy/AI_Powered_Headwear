@@ -226,7 +226,7 @@ def combine_audio_files(file_list, output_path="./data/audio_capture/combined_au
         tts_lock.release()
 
 
-def calculate_currency(frame, save_path='currency.png', url='http://localhost:8000/detect/'):
+def calculate_currency(frame, save_path='data/currency.png', url='http://localhost:8000/detect/'):
     cv2.imwrite(save_path, frame)
 
     with open(save_path, 'rb') as f:

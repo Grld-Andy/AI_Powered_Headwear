@@ -9,6 +9,7 @@ from core.audio.audio_capture import combine_audio_files
 from core.tts.piper import send_text_to_tts
 from core.vision.depth_estimation import load_depth_model, run_depth_estimation
 from twi_stuff.translate_and_say import translate_and_play
+from utils.say_in_language import say_in_language
 
 midas_net = load_depth_model()
 stop_vision = threading.Event()
@@ -81,28 +82,10 @@ def announce_detected_objects(language, objects, volume=0.5):
     sentence = ", ".join(parts[:-1]) + ", and " + parts[-1] if len(parts) > 1 else parts[0]
     sentence += " in front of you"
 
-    if language == 'twi':
-        if not wakeword_detected.is_set():
-            print(f"{translated_phrases}in front of you")
-            # wav_files.append(f"{translated_phrases}in front of you.wav")
-            threading.Thread(
-                target=translate_and_play,
-                args=(sentence,),
-                kwargs={'wait_for_completion': False},
-                daemon=True
-            ).start()
-            # threading.Thread(
-            #     target=combine_audio_files,
-            #     args=(wav_files,),
-            #     kwargs={'wait_for_completion': False, 'volume': volume},
-            #     daemon=True
-            # ).start()
-    else:
-        if not wakeword_detected.is_set():
-            print(sentence)
-            threading.Thread(
-                target=send_text_to_tts,
-                args=(sentence,),
-                kwargs={'wait_for_completion': False, 'volume': volume},
-                daemon=True
-            ).start()
+    if not wakeword_detected.is_set():
+        threading.Thread(
+            target=say_in_language,
+            args=(sentence, language,),
+            kwargs={'wait_for_completion': False},
+            daemon=True
+        ).start()

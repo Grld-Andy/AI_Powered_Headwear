@@ -10,6 +10,7 @@ from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
 from core.tts.python_ttsx3 import speak
 from twi_stuff.translate_and_say import translate_and_play
+from utils.say_in_language import say_in_language
 
 # Global state variables
 awaiting_command = False
@@ -30,10 +31,7 @@ def initialize_app():
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     SELECTED_LANGUAGE = detect_or_load_language()
     print("Selected language:", SELECTED_LANGUAGE)
-    if SELECTED_LANGUAGE == "english":
-        speak("Hello")
-    elif SELECTED_LANGUAGE == "twi":
-        translate_and_play("Hello", wait_for_completion=True)
+    say_in_language(f"Hello", SELECTED_LANGUAGE, wait_for_completion=True)
 
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
     cap = cv2.VideoCapture(0)
@@ -58,8 +56,12 @@ def run_main_loop():
 
         ret, frame = cap.read()
         frame = cv2.resize(frame, (640, 480))
-        if not ret:
-            break
+        if not ret or frame is None:
+            print("Warning: Could not read from camera. Reinitializing...")
+            cap.release()
+            time.sleep(0.5)
+            cap = cv2.VideoCapture(0)
+            continue
 
         frame_count += 1
         if frame_count % frame_skip != 0:

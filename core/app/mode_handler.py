@@ -10,6 +10,7 @@ from core.app.modes.volume_control_mode import increase_volume, decrease_volume
 from core.nlp.language import set_preferred_language
 from core.nlp.llm_handler import handle_chat_mode
 from core.tts.python_ttsx3 import speak
+from utils.say_in_language import say_in_language
 
 vision_thread = None
 
@@ -29,9 +30,6 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         elif current_mode == "stop":
             return handle_stop_mode(frame), current_mode
 
-    # --- Everything else continues below ---
-
-    # Helpers to safely pass latest frame and language to background vision
     latest = {'frame': frame, 'language': language}
 
     def get_frame():
@@ -59,7 +57,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return handle_currency_mode(frame, language), "start"
 
     elif current_mode == "reading":
-        return handle_reading_mode(frame, language, frozen_frame), "start"
+        valid_frozen_frame = frozen_frame if frozen_frame is not None else frame
+        return handle_reading_mode(frame, language, valid_frozen_frame), "start"
 
     elif current_mode == "reset":
         language = set_preferred_language()
@@ -73,22 +72,23 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "chat"
 
     elif current_mode == "time":
-        get_current_time()
+        get_current_time(language)
         return frame, "start"
 
     elif current_mode == "save_contact":
-        handle_save_contact_mode(transcribed_text)
+        handle_save_contact_mode(transcribed_text, language)
         return frame, "start"
 
     elif current_mode == 'get_contact':
-        handle_get_contact_mode()
+        handle_get_contact_mode(language)
         return frame, "start"
 
     elif current_mode == "send_money":
-        handle_send_money_mode(transcribed_text)
+        handle_send_money_mode(transcribed_text, language)
         return frame, "start"
 
     elif current_mode == "shutdown":
+        say_in_language("Turning off", language, wait_for_completion=True, priority=1)
         speak("Shutting down the device now.")
         # os.system("sudo shutdown now")
         return frozen_frame, "shutdown"

@@ -1,37 +1,36 @@
 import cv2
+import numpy as np
 from core.vision.ocr import ocr_space_file
-from core.audio.audio_capture import play_audio_winsound
-from core.tts.piper import send_text_to_tts
-from config.settings import translated_phrases
-from twi_stuff.translate_and_say import translate_and_play
+from utils.say_in_language import say_in_language
 
 
-def handle_reading_mode(frame, language, frozen_frame):
-    if frozen_frame is None:
-        frozen_frame = frame.copy()
-        cv2.imshow("Camera View", frozen_frame)
-        cv2.waitKey(1)
-        cv2.imwrite("captured_image.png", frozen_frame)
-        try:
-            text = ocr_space_file("captured_image.png").strip()
-        except Exception as e:
-            print("OCR Error:", e)
-            text = ""
+def handle_reading_mode(frame, language, _):  # frozen_frame no longer needed
+    print("Reading mode activated")
 
-        if text:
-            if language == 'twi':
-                translate_and_play(f"start reading. {text}. done reading.", wait_for_completion=True)
-                # play_audio_winsound(f"{translated_phrases}start reading.wav", wait_for_completion=True)
-                # send_text_to_tts(text, wait_for_completion=True)
-                # play_audio_winsound(f"{translated_phrases}done reading.wav", wait_for_completion=True)
-            else:
-                send_text_to_tts("Reading text now.", wait_for_completion=True)
-                send_text_to_tts(text, wait_for_completion=True)
-                send_text_to_tts("Done reading text.", wait_for_completion=True)
-            return None, "start"
-        else:
-            send_text_to_tts("No text found.", wait_for_completion=True)
-            return None, "reading"
+    if frame is None or not isinstance(frame, np.ndarray):
+        say_in_language("No valid image to read.", language, wait_for_completion=True)
+        return None, "start"
+
+    # Resize for display/OCR consistency
+    frame = cv2.resize(frame, (640, 480))
+    cv2.imshow("Camera View", frame)
+    cv2.waitKey(1)
+
+    # Save frame to disk for OCR
+    cv2.imwrite("data/captured_image.png", frame)
+
+    try:
+        print("Extracting text")
+        text = ocr_space_file("data/captured_image.png").strip()
+        print("Extracted text:", text)
+    except Exception as e:
+        print("OCR Error:", e)
+        text = ""
+
+    if text:
+        say_in_language(f"Reading now. {text}. Done reading.", language, wait_for_completion=True)
     else:
-        cv2.imshow("Camera View", frozen_frame)
-        return frozen_frame, "reading"
+        say_in_language("No text found.", language, wait_for_completion=True)
+
+    # Return to 'start' mode either way
+    return frame, "start"

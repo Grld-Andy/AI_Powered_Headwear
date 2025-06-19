@@ -56,7 +56,7 @@ def transcribe_audio(file_path: str, language: str = "tw") -> str:
         return f"❌ Exception: {str(e)}"
 
 
-def record_and_transcribe(language="tw", duration=2):
+def record_and_transcribe(language="tw", duration=4):
     wav_file = "sample.wav"
     mp3_file = "sample.mp3"
     record_audio(wav_file, duration)

@@ -54,11 +54,11 @@ english_training_phrases = [
     # current_location
     "where am I", "what's my current location", "tell me where I am", "give me my location",
     # navigate
-    "take me to the mall", "I want directions to the hospital", "how do I get to the train station", "navigate to the pharmacy",
+    "take me somewhere", "I want directions", "how do I get to the train station", "navigate to the pharmacy",
     # bookmark_location
     "save this location", "remember where I am", "bookmark this place", "mark this spot",
     # save_contact
-    "save a new contact", "add John to my contacts", "remember this phone number", "store a contact for me",
+    "save a phone number", "add a new contact info", "remember this phone number", "store a contact for me",
     # send_money
     "send money to Sarah", "transfer cash to my friend", "make a mobile payment", "pay someone now",
     # time
@@ -70,7 +70,7 @@ english_training_phrases = [
     # shutdown
     "shut down the device", "turn off the system", "power off", "shutdown now",
     # get contact
-    "get John's phone number", "what is Sarah's contact info", "show me my contacts", "retrieve Mike's number",
+    "get a phone number", "find contact info", "show me my contacts", "retrieve a phone number",
 ]
 training_phrases = english_training_phrases
 command_labels = [

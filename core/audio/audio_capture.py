@@ -154,10 +154,10 @@ def listen_and_save(audio_path, duration, i=0):
         return ""
 
 
-def predict_command(audio_path, language, duration=2):
+def predict_command(audio_path, language, duration=3):
     transcribed_text = ""
     if language == 'twi':
-        transcribed_text = record_and_transcribe()
+        transcribed_text = record_and_transcribe(duration=4)
         transcribed_text = translate_text(transcribed_text, lang="tw-en")
         print(transcribed_text)
     else:

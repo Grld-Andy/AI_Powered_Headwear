@@ -1,6 +1,11 @@
 import httpx
 import speech_recognition as sr
+
+from config.settings import SELECTED_LANGUAGE
+from core.nlp.llm_together_ai import chat_with_together
 from core.tts.piper import send_text_to_tts
+from twi_stuff.eng_to_twi import translate_text
+from twi_stuff.translate_and_say import translate_and_play
 
 # ----------- Configuration ------------
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -43,23 +48,14 @@ def warm_up_tinyllama(model: str = MODEL_NAME):
     except Exception as e:
         print("Failed to warm up TinyLlama:", e)
 
-warm_up_tinyllama()
 
-# ----- Usage example -----
-# from ollama_tinyllama import TinyLlamaClient, warm_up_tinyllama
-#
-# # Optional: preload model into memory
 # warm_up_tinyllama()
-#
-# # Create reusable client
+
+# # Optional: preload model into memory
 # llama = TinyLlamaClient()
-#
-# # Send prompt
 # prompt = "where is tarkwa?"
 # new_response = llama.send_prompt(prompt)
 # print("TinyLlama Response:\n", new_response)
-#
-# # Close client when done (to clean up connection)
 # llama.close()
 
 
@@ -76,12 +72,18 @@ def handle_chat_mode(duration: int = 2) -> str:
         transcribed_text = recognizer.recognize_google(audio)
         print(f"🗣️ User said: {transcribed_text}")
 
-        # Send to TinyLlama
-        tiny_llama = TinyLlamaClient()
-        response = tiny_llama.send_prompt(transcribed_text)
-        tiny_llama.close()
+        # # Send to TinyLlama
+        # tiny_llama = TinyLlamaClient()
+        # response = tiny_llama.send_prompt(transcribed_text)
+        # tiny_llama.close()
 
-        send_text_to_tts(response, wait_for_completion=True, priority=0)
+        response = chat_with_together(transcribed_text)
+
+        if SELECTED_LANGUAGE == 'twi':
+            translated_text = translate_text(transcribed_text, "en-tw")
+            translate_and_play(translated_text, wait_for_completion=True)
+        else:
+            send_text_to_tts(response, wait_for_completion=True, priority=0)
         return response
 
     except sr.UnknownValueError:

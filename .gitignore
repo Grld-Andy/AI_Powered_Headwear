@@ -4,6 +4,7 @@
 /models
 /yolov5
 **/*.wav
+**/*.png
 # Ignore Python cache files
 *.py[cod]
 # Ignore Jupyter Notebook checkpoints

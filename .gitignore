@@ -2,6 +2,7 @@
 /audio_capture
 /data
 /models
+/tests
 /yolov5
 **/*.wav
 **/*.png

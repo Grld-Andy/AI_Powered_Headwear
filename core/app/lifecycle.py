@@ -8,8 +8,6 @@ from core.nlp.language import detect_or_load_language
 from core.socket.listen_wakeword import listen_wakeword_socket
 from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
-from core.tts.python_ttsx3 import speak
-from twi_stuff.translate_and_say import translate_and_play
 from utils.say_in_language import say_in_language
 
 # Global state variables

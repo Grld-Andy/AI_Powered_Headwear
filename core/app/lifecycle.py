@@ -2,7 +2,7 @@ import cv2
 import time
 import threading
 from tensorflow.keras.models import load_model
-from config.settings import wakeword_detected
+from config.settings import wakeword_detected, esp32_connected  # <-- Add esp32_connected
 from core.audio.audio_capture import play_audio_winsound
 from core.nlp.language import detect_or_load_language
 from core.app.command_handler import handle_command
@@ -25,16 +25,19 @@ url = "http://10.156.184.165:81/stream"
 
 def initialize_app():
     global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL, cap
+
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     SELECTED_LANGUAGE = detect_or_load_language()
     print("Selected language:", SELECTED_LANGUAGE)
-    say_in_language(f"Hello", SELECTED_LANGUAGE, wait_for_completion=True)
+    say_in_language("Hello", SELECTED_LANGUAGE, wait_for_completion=True)
 
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
-    # cap = cv2.VideoCapture(0)
+
+    # You can use USB webcam, default cam, or ESP32 stream
     cap = cv2.VideoCapture(0)
     # cap = cv2.VideoCapture(url)
-    threading.Thread(target=listen_wakeword_socket, daemon=True).start()
+
+    print("[Main] Initialization complete.")
 
 
 def run_main_loop():
@@ -45,8 +48,17 @@ def run_main_loop():
     frozen_frame = None
     frame_skip = 2
     frame_count = 0
+    last_status_print = 0
 
     while True:
+        now = time.time()
+        if now - last_status_print > 5:  # Print every 5 seconds
+            if esp32_connected.is_set():
+                print("✅ ESP32 microphone is connected.")
+            else:
+                print("❌ ESP32 microphone is not connected.")
+            last_status_print = now
+
         if wakeword_detected.is_set() and not awaiting_command:
             awaiting_command = True
             current_mode, transcribed_text = handle_command(SELECTED_LANGUAGE)
@@ -54,7 +66,6 @@ def run_main_loop():
             wakeword_detected.clear()
 
         ret, frame = cap.read()
-        frame = cv2.resize(frame, (640, 480))
         if not ret or frame is None:
             print("Warning: Could not read from camera. Reinitializing...")
             cap.release()
@@ -62,6 +73,7 @@ def run_main_loop():
             cap = cv2.VideoCapture(0)
             continue
 
+        frame = cv2.resize(frame, (640, 480))
         frame_count += 1
         if frame_count % frame_skip != 0:
             continue
@@ -78,4 +90,3 @@ def run_main_loop():
 
     cap.release()
     cv2.destroyAllWindows()
-    return

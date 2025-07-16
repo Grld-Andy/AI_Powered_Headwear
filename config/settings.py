@@ -107,6 +107,7 @@ cap = cv2.VideoCapture(0)
 
 # State variables
 wakeword_detected = threading.Event()
+esp32_connected = threading.Event()
 awaiting_command = False
 current_mode = "stop"
 DATABASE = 'database.db'

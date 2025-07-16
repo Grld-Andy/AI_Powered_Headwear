@@ -83,7 +83,7 @@ def handle_chat_mode(duration: int = 2) -> str:
             translated_text = translate_text(transcribed_text, "en-tw")
             translate_and_play(translated_text, wait_for_completion=True)
         else:
-            send_text_to_tts(response, wait_for_completion=True, priority=0)
+            send_text_to_tts(response, wait_for_completion=True, priority=1)
         return response
 
     except sr.UnknownValueError:

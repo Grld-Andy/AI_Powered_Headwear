@@ -50,7 +50,7 @@ def save_language(lang):
 
 
 def get_contact_by_name(name):
-    conn = sqlite3.connect('contacts.db')
+    conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
     cursor.execute('''
         SELECT name, number FROM contacts

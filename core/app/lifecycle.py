@@ -5,11 +5,8 @@ from tensorflow.keras.models import load_model
 from config.settings import wakeword_detected
 from core.audio.audio_capture import play_audio_winsound
 from core.nlp.language import detect_or_load_language
-from core.socket.listen_wakeword import listen_wakeword_socket
 from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
-from core.tts.python_ttsx3 import speak
-from twi_stuff.translate_and_say import translate_and_play
 from utils.say_in_language import say_in_language
 
 # Global state variables
@@ -24,7 +21,7 @@ cap = None
 SELECTED_LANGUAGE = None
 AUDIO_COMMAND_MODEL = None
 transcribed_text = None
-
+url = "http://10.156.184.165:81/stream"
 
 def initialize_app():
     global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL, cap
@@ -34,7 +31,9 @@ def initialize_app():
     say_in_language(f"Hello", SELECTED_LANGUAGE, wait_for_completion=True)
 
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
+    # cap = cv2.VideoCapture(0)
     cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(url)
     threading.Thread(target=listen_wakeword_socket, daemon=True).start()
 
 

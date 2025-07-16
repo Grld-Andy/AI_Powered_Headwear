@@ -33,6 +33,7 @@ def translate_text(text: str, lang: str = "en-tw") -> str:
         response = requests.post(TRANSLATION_URL, json=payload, headers=headers)
 
         if response.status_code == 200:
+            print(f"Translated text: {response.text}")
             return response.text
         else:
             return f"Error {response.status_code}: {response.json().get('message', 'Unknown error')}"

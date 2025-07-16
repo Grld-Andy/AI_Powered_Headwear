@@ -155,17 +155,17 @@ def listen_and_save(audio_path, duration, i=0):
 
 
 def predict_command(audio_path, language, duration=3):
-    transcribed_text = ""
     if language == 'twi':
         transcribed_text = record_and_transcribe(duration=4)
         transcribed_text = translate_text(transcribed_text, lang="tw-en")
-        print(transcribed_text)
+        print("Translated text: ", transcribed_text)
     else:
         transcribed_text = listen_and_save(audio_path, duration)
 
     if transcribed_text == "":
         return "background", transcribed_text
 
+    print(f"this is what you said {transcribed_text}")
     classifier = CommandClassifier(training_phrases, command_labels)
     predicted_label = classifier.classify(transcribed_text)
     print(f"🔮 Predicted Class: {predicted_label}")

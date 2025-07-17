@@ -1,13 +1,13 @@
 import cv2
 import time
-from tensorflow.keras.models import load_model
-from config.settings import wakeword_detected, get_mode, set_mode
-from core.audio.audio_capture import play_audio_winsound
-from core.nlp.language import detect_or_load_language
-from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
-from core.socket.esp32_listener import start_esp32_listener
+from tensorflow.keras.models import load_model
 from utils.say_in_language import say_in_language
+from core.app.command_handler import handle_command
+from core.nlp.language import detect_or_load_language
+from core.audio.audio_capture import play_audio_winsound
+from config.settings import wakeword_detected, get_mode, set_mode
+from core.socket.esp32_listener import start_esp32_listener, broadcast_mode_update
 
 # Global state variables
 awaiting_command = False
@@ -58,7 +58,10 @@ def run_main_loop():
         if wakeword_detected.is_set() and not awaiting_command:
             awaiting_command = True
             new_mode, transcribed_text = handle_command(SELECTED_LANGUAGE)
+            
             set_mode(new_mode)  # Update global mode
+            broadcast_mode_update(new_mode)
+
             awaiting_command = False
             wakeword_detected.clear()
 

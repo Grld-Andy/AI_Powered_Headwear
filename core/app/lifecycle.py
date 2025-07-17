@@ -6,7 +6,7 @@ from core.audio.audio_capture import play_audio_winsound
 from core.nlp.language import detect_or_load_language
 from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
-from core.socket.wakeword_listener import start_wakeword_listener
+from core.socket.esp32_listener import start_esp32_listener
 from utils.say_in_language import say_in_language
 import os
 
@@ -29,7 +29,7 @@ url = "http://10.156.184.165:81/stream"
 def initialize_app():
     global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL, cap
 
-    start_wakeword_listener()
+    start_esp32_listener()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     SELECTED_LANGUAGE = detect_or_load_language()
     print("Selected language:", SELECTED_LANGUAGE)

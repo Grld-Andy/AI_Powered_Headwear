@@ -1,13 +1,14 @@
 import cv2
 import time
-import threading
 from tensorflow.keras.models import load_model
-from config.settings import wakeword_detected, esp32_connected  # <-- Add esp32_connected
+from config.settings import wakeword_detected
 from core.audio.audio_capture import play_audio_winsound
 from core.nlp.language import detect_or_load_language
 from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
+from core.socket.wakeword_listener import start_wakeword_listener
 from utils.say_in_language import say_in_language
+import os
 
 # Global state variables
 awaiting_command = False
@@ -21,11 +22,14 @@ cap = None
 SELECTED_LANGUAGE = None
 AUDIO_COMMAND_MODEL = None
 transcribed_text = None
+
 url = "http://10.156.184.165:81/stream"
+
 
 def initialize_app():
     global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL, cap
 
+    start_wakeword_listener()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     SELECTED_LANGUAGE = detect_or_load_language()
     print("Selected language:", SELECTED_LANGUAGE)
@@ -33,12 +37,11 @@ def initialize_app():
 
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
 
-    # You can use USB webcam, default cam, or ESP32 stream
+    # Use default webcam (or ESP32 stream by replacing below)
     cap = cv2.VideoCapture(0)
     # cap = cv2.VideoCapture(url)
 
     print("[Main] Initialization complete.")
-
 
 def run_main_loop():
     global awaiting_command, current_mode, wakeword_processing, transcribed_text
@@ -51,20 +54,14 @@ def run_main_loop():
     last_status_print = 0
 
     while True:
-        now = time.time()
-        if now - last_status_print > 5:  # Print every 5 seconds
-            if esp32_connected.is_set():
-                print("✅ ESP32 microphone is connected.")
-            else:
-                print("❌ ESP32 microphone is not connected.")
-            last_status_print = now
-
+        # Wake word triggered
         if wakeword_detected.is_set() and not awaiting_command:
             awaiting_command = True
             current_mode, transcribed_text = handle_command(SELECTED_LANGUAGE)
             awaiting_command = False
             wakeword_detected.clear()
 
+        # Read from camera
         ret, frame = cap.read()
         if not ret or frame is None:
             print("Warning: Could not read from camera. Reinitializing...")
@@ -82,6 +79,7 @@ def run_main_loop():
         if key == ord('q') or current_mode == "shutdown":
             break
 
+        # Handle mode logic
         frozen_frame, current_mode = process_mode(
             current_mode, frame, SELECTED_LANGUAGE,
             last_frame_time, last_depth_time,

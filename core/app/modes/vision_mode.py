@@ -3,7 +3,8 @@ import cv2
 import time
 from collections import Counter
 from config.settings import FRAME_INTERVAL, DEPTH_INTERVAL, translated_labels, translated_numbers, translated_phrases, \
-    yolo_model, wakeword_detected
+    wakeword_detected
+from config.load_models import yolo_model
 from core.vision.object_detection import run_object_detection
 from core.audio.audio_capture import combine_audio_files
 from core.tts.piper import send_text_to_tts

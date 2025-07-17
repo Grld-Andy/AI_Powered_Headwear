@@ -1,4 +1,4 @@
-from config.settings import yolo_model
+from config.load_models import yolo_model
 
 
 def run_object_detection(frame):

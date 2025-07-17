@@ -1,7 +1,7 @@
 import cv2
 import threading
-from ultralytics import YOLO
-from tensorflow.keras.models import load_model
+# from ultralytics import YOLO
+# from tensorflow.keras.models import load_model
 
 # Initialize these outside your loop once
 last_frame_time = 0
@@ -91,17 +91,17 @@ last_play_time = 0
 tts_lock = threading.Lock()
 audio_playing = threading.Event()
 LANG_MODEL_PATH = './models/language_selector.keras'
-LANG_MODEL = load_model(LANG_MODEL_PATH)
 LANGUAGES = ['background', 'english', 'twi']
 translated_audio = 'data/translated/'
 translated_phrases = translated_audio + 'phrases/'
 translated_numbers = translated_audio + 'numbers/'
 translated_labels = translated_audio + 'labels/'
-
-# Load models
 AUDIO_COMMAND_MODEL = None
-yolo_model = YOLO("./models/yolov5n.pt")
 INTENT_CLASSIFIER_MODEL = "./models/knn_classifier.joblib"
+
+# # Load models
+# LANG_MODEL = load_model(LANG_MODEL_PATH)
+# yolo_model = YOLO("./models/yolov5n.pt")
 
 cap = cv2.VideoCapture(0)
 

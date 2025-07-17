@@ -1,6 +1,7 @@
 from core.audio.audio_capture import play_audio_winsound, predict_audio
 from core.tts.piper import send_text_to_tts
 import config.settings as settings
+import config.load_models as load_models_config
 from core.database.database import setup_db, get_saved_language, save_language
 from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.translate_and_say import translate_and_play
@@ -30,7 +31,7 @@ def set_preferred_language():
 
     try:
         print("You can try speaking")
-        lang, confidence = predict_audio(settings.LANG_AUDIO_FILE, settings.LANG_MODEL, settings.LANGUAGES, duration=2)
+        lang, confidence = predict_audio(settings.LANG_AUDIO_FILE, settings.load_models_config, settings.LANGUAGES, duration=2)
         print(f'[LANG] You said {lang}, I am {confidence * 100}% confident')
         if lang in ('english','twi'):
             say_in_language(f"You choose {lang}", lang, wait_for_completion=True)

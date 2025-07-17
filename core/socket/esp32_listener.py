@@ -1,5 +1,4 @@
-from config.settings import wakeword_detected
-from core.lifecycle.mode_controller import set_mode  # You may need to create or adjust this
+from config.settings import set_mode, wakeword_detected
 import socket
 import threading
 

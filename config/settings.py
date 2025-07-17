@@ -109,5 +109,13 @@ cap = cv2.VideoCapture(0)
 wakeword_detected = threading.Event()
 esp32_connected = threading.Event()
 awaiting_command = False
-current_mode = "stop"
 DATABASE = 'database.db'
+
+current_mode = "stop"
+def get_mode():
+    global current_mode
+    return current_mode
+
+def set_mode(new_mode):
+    global current_mode
+    current_mode = new_mode

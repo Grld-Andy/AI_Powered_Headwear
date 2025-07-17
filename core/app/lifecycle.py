@@ -1,18 +1,16 @@
 import cv2
 import time
 from tensorflow.keras.models import load_model
-from config.settings import wakeword_detected
+from config.settings import wakeword_detected, get_mode, set_mode
 from core.audio.audio_capture import play_audio_winsound
 from core.nlp.language import detect_or_load_language
 from core.app.command_handler import handle_command
 from core.app.mode_handler import process_mode
 from core.socket.esp32_listener import start_esp32_listener
 from utils.say_in_language import say_in_language
-import os
 
 # Global state variables
 awaiting_command = False
-current_mode = "start"
 wakeword_processing = False
 last_frame_time = 0
 last_depth_time = 0
@@ -43,21 +41,24 @@ def initialize_app():
 
     print("[Main] Initialization complete.")
 
+
 def run_main_loop():
-    global awaiting_command, current_mode, wakeword_processing, transcribed_text
+    global awaiting_command, wakeword_processing, transcribed_text
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw, cap
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None
     frame_skip = 2
     frame_count = 0
-    last_status_print = 0
 
     while True:
+        current_mode = get_mode()  # Always get the latest mode
+
         # Wake word triggered
         if wakeword_detected.is_set() and not awaiting_command:
             awaiting_command = True
-            current_mode, transcribed_text = handle_command(SELECTED_LANGUAGE)
+            new_mode, transcribed_text = handle_command(SELECTED_LANGUAGE)
+            set_mode(new_mode)  # Update global mode
             awaiting_command = False
             wakeword_detected.clear()
 
@@ -80,11 +81,15 @@ def run_main_loop():
             break
 
         # Handle mode logic
-        frozen_frame, current_mode = process_mode(
+        frozen_frame, updated_mode = process_mode(
             current_mode, frame, SELECTED_LANGUAGE,
             last_frame_time, last_depth_time,
             cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text
         )
+
+        # Update global mode if it changed
+        if updated_mode != current_mode:
+            set_mode(updated_mode)
 
     cap.release()
     cv2.destroyAllWindows()

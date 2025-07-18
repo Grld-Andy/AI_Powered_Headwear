@@ -4,8 +4,8 @@ from geopy.distance import geodesic
 from datetime import datetime
 from typing import Dict, Tuple, List
 import os
-from dotenv import load_dotenv
 import geocoder
+from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Google Maps and Nominatim

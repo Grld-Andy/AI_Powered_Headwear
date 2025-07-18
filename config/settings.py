@@ -13,6 +13,14 @@ cached_depth_raw = None
 SELECTED_LANGUAGE = ''
 wakeword_processing = False
 
+def get_language():
+    global SELECTED_LANGUAGE
+    return SELECTED_LANGUAGE
+
+def set_language(language):
+    global SELECTED_LANGUAGE
+    SELECTED_LANGUAGE = language
+
 # === Constants and Globals ===
 HOST = 'localhost'
 PORT = 1234

@@ -6,7 +6,6 @@ from utils.say_in_language import say_in_language
 
 
 def handle_command(language):
-    say_in_language("Hello, how may I help you?", language, wait_for_completion=True, priority=1)
     command, transcribed_text = predict_command("audio_capture/user_command.wav", language, duration=4)
 
     if command != "background":

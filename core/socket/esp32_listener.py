@@ -1,3 +1,5 @@
+from utils.say_in_language import say_in_language
+
 # core/socket/esp32_listener.py
 
 import socket
@@ -104,7 +106,8 @@ def handle_voice_interaction(conn):
         set_mode("voice")
         broadcast_mode_update("voice")
 
-        text = "Please speak after the beep."
+        text = "Hello, how may I help you?"
+        say_in_language("Hello, how may I help you?", language, wait_for_completion=True, priority=1)
         send_text_to_tts(text, True, priority=1)
 
         _send_to_client(conn, "VOICE_PROMPT_DONE")
@@ -141,6 +144,7 @@ def transcribe_audio(pcm_data, sample_rate=16000):
             wf.writeframes(pcm_data)
         wav_io.seek(0)
 
+        
         recognizer = sr.Recognizer()
         with sr.AudioFile(wav_io) as source:
             audio = recognizer.record(source)

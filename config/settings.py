@@ -111,7 +111,7 @@ esp32_connected = threading.Event()
 awaiting_command = False
 DATABASE = 'database.db'
 
-current_mode = "stop"
+current_mode = "start"
 def get_mode():
     global current_mode
     return current_mode

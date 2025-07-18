@@ -1,5 +1,8 @@
 import cv2
 import time
+import threading
+import numpy as np
+
 from core.app.mode_handler import process_mode
 from tensorflow.keras.models import load_model
 from utils.say_in_language import say_in_language
@@ -16,16 +19,32 @@ last_frame_time = 0
 last_depth_time = 0
 cached_depth_vis = None
 cached_depth_raw = None
-cap = None
 SELECTED_LANGUAGE = None
 AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
+# ESP32 stream URL
 url = "http://10.156.184.165:81/stream"
+frame_holder = {'frame': None}
+
+
+def esp32_mjpeg_stream_thread(url, frame_holder):
+    cap = cv2.VideoCapture(url)
+    if not cap.isOpened():
+        print(f"[ESP32 Camera Thread] Failed to open stream: {url}")
+        return
+
+    while True:
+        ret, frame = cap.read()
+        if ret and frame is not None:
+            frame_holder['frame'] = frame
+        else:
+            print("[ESP32 Camera Thread] Failed to read frame. Retrying...")
+            time.sleep(0.1)
 
 
 def initialize_app():
-    global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL, cap
+    global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL
 
     start_esp32_listener()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
@@ -35,16 +54,15 @@ def initialize_app():
 
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
 
-    # Use default webcam (or ESP32 stream by replacing below)
-    # cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture(url)
+    # Start the ESP32 camera streaming thread
+    threading.Thread(target=esp32_mjpeg_stream_thread, args=(url, frame_holder), daemon=True).start()
 
     print("[Main] Initialization complete.")
 
 
 def run_main_loop():
     global awaiting_command, wakeword_processing, transcribed_text
-    global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw, cap
+    global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None
@@ -58,20 +76,16 @@ def run_main_loop():
         if wakeword_detected.is_set() and not awaiting_command:
             awaiting_command = True
             new_mode, transcribed_text = handle_command(SELECTED_LANGUAGE)
-            
-            set_mode(new_mode)  # Update global mode
+            set_mode(new_mode)
             broadcast_mode_update(new_mode)
-
             awaiting_command = False
             wakeword_detected.clear()
 
-        # Read from camera
-        ret, frame = cap.read()
-        if not ret or frame is None:
-            print("Warning: Could not read from camera. Reinitializing...")
-            cap.release()
-            time.sleep(0.5)
-            cap = cv2.VideoCapture(0)
+        # Get the latest frame from ESP32
+        frame = frame_holder.get('frame')
+        if frame is None:
+            print("Waiting for ESP32 frame...")
+            time.sleep(0.05)
             continue
 
         frame = cv2.resize(frame, (640, 480))
@@ -90,9 +104,7 @@ def run_main_loop():
             cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text
         )
 
-        # Update global mode if it changed
         if updated_mode != current_mode:
             set_mode(updated_mode)
 
-    cap.release()
     cv2.destroyAllWindows()

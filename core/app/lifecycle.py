@@ -36,8 +36,8 @@ def initialize_app():
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
 
     # Use default webcam (or ESP32 stream by replacing below)
-    cap = cv2.VideoCapture(0)
-    # cap = cv2.VideoCapture(url)
+    # cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(url)
 
     print("[Main] Initialization complete.")
 

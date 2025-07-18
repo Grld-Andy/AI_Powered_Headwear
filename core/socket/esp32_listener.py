@@ -72,8 +72,12 @@ def handle_client(conn, addr):
                     broadcast_mode_update("reading")
 
                 elif command == "MODE_OBJECT":
-                    set_mode("count")
-                    broadcast_mode_update("count")
+                    set_mode("start")
+                    broadcast_mode_update("start")
+
+                elif command == "MODE_STOP":
+                    set_mode("stop")
+                    broadcast_mode_update("stop")
 
     except Exception as e:
         print(f"[ESP32] Error: {e}")

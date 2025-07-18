@@ -1,4 +1,5 @@
 import threading
+from config.settings import set_language
 from core.app.modes.currency_mode import handle_currency_mode
 from core.app.modes.current_time_mode import get_current_time
 from core.app.modes.digital_services_mode.mobile_network import handle_save_contact_mode, handle_send_money_mode, \
@@ -61,7 +62,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return handle_reading_mode(frame, language, valid_frozen_frame), "start"
 
     elif current_mode == "reset":
-        language = set_preferred_language()
+        set_language(set_preferred_language())
         return frame, "start"
 
     elif current_mode == "location":

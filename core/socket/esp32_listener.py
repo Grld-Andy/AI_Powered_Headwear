@@ -1,3 +1,4 @@
+from core.app.command_handler import handle_command
 from utils.say_in_language import say_in_language
 
 # core/socket/esp32_listener.py
@@ -7,7 +8,7 @@ import threading
 import io
 import wave
 import speech_recognition as sr
-from config.settings import set_mode, get_mode
+from config.settings import get_language, set_mode, get_mode
 from core.tts.piper import send_text_to_tts
 
 clients = set()
@@ -107,7 +108,7 @@ def handle_voice_interaction(conn):
         broadcast_mode_update("voice")
 
         text = "Hello, how may I help you?"
-        say_in_language("Hello, how may I help you?", language, wait_for_completion=True, priority=1)
+        say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True, priority=1)
         send_text_to_tts(text, True, priority=1)
 
         _send_to_client(conn, "VOICE_PROMPT_DONE")
@@ -136,6 +137,8 @@ def receive_audio_stream(conn):
 
 def transcribe_audio(pcm_data, sample_rate=16000):
     try:
+        # Save PCM as WAV for command handler
+        import wave, io
         wav_io = io.BytesIO()
         with wave.open(wav_io, 'wb') as wf:
             wf.setnchannels(1)
@@ -144,18 +147,17 @@ def transcribe_audio(pcm_data, sample_rate=16000):
             wf.writeframes(pcm_data)
         wav_io.seek(0)
 
-        
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(wav_io) as source:
-            audio = recognizer.record(source)
+        # Save to file
+        with open("audio_capture/user_command.wav", "wb") as f:
+            f.write(wav_io.read())
 
-        result = recognizer.recognize_google(audio)
-        print(f"[VOICE] Transcribed: {result}")
-        # Optional: set_mode("reading") or broadcast back result
-    except sr.UnknownValueError:
-        print("[VOICE] Could not understand audio.")
-    except sr.RequestError as e:
-        print(f"[VOICE] Speech recognition error: {e}")
+        command, text = handle_command(get_language())
+        print(f"[VOICE] Final Command: {command} | Transcribed: {text}")
+        return command
+
+    except Exception as e:
+        print(f"[VOICE] Error processing audio: {e}")
+        return "background"
 
 
 def start_esp32_listener(host="0.0.0.0", port=5678):

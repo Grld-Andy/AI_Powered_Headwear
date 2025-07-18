@@ -154,9 +154,14 @@ def listen_and_save(audio_path, duration, i=0):
         return ""
 
 
+def predict_command_from_text(text):
+    classifier = CommandClassifier(training_phrases, command_labels)
+    return classifier.classify(text)
+
+
 def predict_command(audio_path, language, duration=3):
     if language == 'twi':
-        transcribed_text = record_and_transcribe(duration=4)
+        transcribed_text = record_and_transcribe(duration)
         transcribed_text = translate_text(transcribed_text, lang="tw-en")
         print("Translated text: ", transcribed_text)
     else:

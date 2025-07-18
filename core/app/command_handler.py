@@ -1,12 +1,13 @@
-from core.audio.audio_capture import play_audio_winsound, predict_command
+from core.audio.audio_capture import play_audio_winsound, predict_command, predict_command_from_text
 from core.tts.piper import send_text_to_tts
 from config.settings import translated_phrases, COMMAND_CLASSES
 from twi_stuff.translate_and_say import translate_and_play
 from utils.say_in_language import say_in_language
+from twi_stuff.eng_to_twi import translate_text
 
 
 def handle_command(language):
-    command, transcribed_text = predict_command("audio_capture/user_command.wav", language, duration=4)
+    command, transcribed_text = predict_command("audio_capture/user_command.wav", language, duration=3)
 
     if command != "background":
         confirm_command(language, command)

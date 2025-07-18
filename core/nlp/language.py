@@ -20,11 +20,11 @@ def detect_or_load_language():
 
 
 def set_preferred_language():
-    if not settings.SELECTED_LANGUAGE:
+    if not settings.get_language():
         send_text_to_tts("Please say your preferred language.", wait_for_completion=True)
         translate_and_play("Please, what language do you prefer", wait_for_completion=True)
     else:
-        if settings.SELECTED_LANGUAGE == 'twi':
+        if settings.get_language() == 'twi':
             translate_and_play("Please, what language do you prefer", wait_for_completion=True)
         else:
             send_text_to_tts("Please say your preferred language.", wait_for_completion=True)
@@ -42,7 +42,7 @@ def set_preferred_language():
         return lang
     except Exception as e:
         print("An error occurred: ", e)
-        if settings.SELECTED_LANGUAGE:
-            return settings.SELECTED_LANGUAGE
+        if settings.get_language():
+            return settings.get_language()
         else:
             return 'twi'

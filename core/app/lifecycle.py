@@ -9,7 +9,7 @@ from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
-from config.settings import wakeword_detected, get_mode, set_mode
+from config.settings import wakeword_detected, get_mode, set_mode, get_language, set_language
 from core.socket.esp32_listener import start_esp32_listener, broadcast_mode_update
 
 # Global state variables
@@ -19,7 +19,6 @@ last_frame_time = 0
 last_depth_time = 0
 cached_depth_vis = None
 cached_depth_raw = None
-SELECTED_LANGUAGE = None
 AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
@@ -44,11 +43,12 @@ def esp32_mjpeg_stream_thread(url, frame_holder):
 
 
 def initialize_app():
-    global SELECTED_LANGUAGE, AUDIO_COMMAND_MODEL
+    global AUDIO_COMMAND_MODEL
 
     start_esp32_listener()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
-    SELECTED_LANGUAGE = detect_or_load_language()
+    set_language(detect_or_load_language())
+    SELECTED_LANGUAGE = get_language()
     print("Selected language:", SELECTED_LANGUAGE)
     say_in_language("Hello", SELECTED_LANGUAGE, wait_for_completion=True)
 
@@ -73,13 +73,13 @@ def run_main_loop():
         current_mode = get_mode()  # Always get the latest mode
 
         # Wake word triggered
-        if wakeword_detected.is_set() and not awaiting_command:
-            awaiting_command = True
-            new_mode, transcribed_text = handle_command(SELECTED_LANGUAGE)
-            set_mode(new_mode)
-            broadcast_mode_update(new_mode)
-            awaiting_command = False
-            wakeword_detected.clear()
+        # if wakeword_detected.is_set() and not awaiting_command:
+        #     awaiting_command = True
+        #     new_mode, transcribed_text = handle_command(get_language())
+        #     set_mode(new_mode)
+        #     broadcast_mode_update(new_mode)
+        #     awaiting_command = False
+        #     wakeword_detected.clear()
 
         # Get the latest frame from ESP32
         frame = frame_holder.get('frame')
@@ -99,7 +99,7 @@ def run_main_loop():
 
         # Handle mode logic
         frozen_frame, updated_mode = process_mode(
-            current_mode, frame, SELECTED_LANGUAGE,
+            current_mode, frame, get_language(),
             last_frame_time, last_depth_time,
             cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text
         )

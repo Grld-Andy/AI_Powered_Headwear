@@ -2,9 +2,12 @@
 
 import socket
 import threading
-from config.settings import set_mode, get_mode, wakeword_detected
+import io
+import wave
+import speech_recognition as sr
+from config.settings import set_mode, get_mode
+from core.tts.piper import send_text_to_tts
 
-# Shared list of connected clients
 clients = set()
 clients_lock = threading.Lock()
 
@@ -23,7 +26,6 @@ def _send_to_client(conn, message):
 
 
 def broadcast_mode_update(mode=None):
-    """Notify all ESP32 clients of the current mode."""
     if mode is None:
         mode = get_mode()
 
@@ -48,11 +50,12 @@ def handle_client(conn, addr):
 
     try:
         while True:
-            data = conn.recv(1024)
+            data = conn.recv(4096)
             if not data:
                 break
 
             lines = data.decode(errors="ignore").splitlines()
+
             for line in lines:
                 command = line.strip().upper()
                 if not command:
@@ -60,12 +63,11 @@ def handle_client(conn, addr):
 
                 print(f"[ESP32] Received: {command}")
 
-                # Respond to client-specific request
                 if command == "GET_MODE":
                     _send_to_client(conn, f"CURRENT_MODE:{get_mode()}")
 
                 elif command == "MODE_VOICE":
-                    wakeword_detected.set()
+                    threading.Thread(target=handle_voice_interaction, args=(conn,), daemon=True).start()
 
                 elif command == "MODE_OCR":
                     set_mode("reading")
@@ -79,6 +81,11 @@ def handle_client(conn, addr):
                     set_mode("stop")
                     broadcast_mode_update("stop")
 
+                elif command == "AUDIO_START":
+                    audio_data = receive_audio_stream(conn)
+                    if audio_data:
+                        threading.Thread(target=transcribe_audio, args=(audio_data,), daemon=True).start()
+
     except Exception as e:
         print(f"[ESP32] Error: {e}")
 
@@ -90,6 +97,61 @@ def handle_client(conn, addr):
             conn.close()
         except:
             pass
+
+
+def handle_voice_interaction(conn):
+    try:
+        set_mode("voice")
+        broadcast_mode_update("voice")
+
+        text = "Please speak after the beep."
+        send_text_to_tts(text, True, priority=1)
+
+        _send_to_client(conn, "VOICE_PROMPT_DONE")
+        print("[VOICE] Prompt sent. Waiting for audio...")
+    except Exception as e:
+        print(f"[VOICE] TTS or prompt error: {e}")
+
+
+def receive_audio_stream(conn):
+    buffer = bytearray()
+    while True:
+        chunk = conn.recv(4096)
+        if not chunk:
+            break
+
+        if b"AUDIO_END" in chunk:
+            end_index = chunk.index(b"AUDIO_END")
+            buffer.extend(chunk[:end_index])
+            break
+
+        buffer.extend(chunk)
+
+    print(f"[AUDIO] Received {len(buffer)} bytes.")
+    return bytes(buffer)
+
+
+def transcribe_audio(pcm_data, sample_rate=16000):
+    try:
+        wav_io = io.BytesIO()
+        with wave.open(wav_io, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sample_rate)
+            wf.writeframes(pcm_data)
+        wav_io.seek(0)
+
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(wav_io) as source:
+            audio = recognizer.record(source)
+
+        result = recognizer.recognize_google(audio)
+        print(f"[VOICE] Transcribed: {result}")
+        # Optional: set_mode("reading") or broadcast back result
+    except sr.UnknownValueError:
+        print("[VOICE] Could not understand audio.")
+    except sr.RequestError as e:
+        print(f"[VOICE] Speech recognition error: {e}")
 
 
 def start_esp32_listener(host="0.0.0.0", port=5678):

@@ -1,17 +1,16 @@
-# esp32_listener.py
 from core.app.command_handler import handle_command
 from utils.say_in_language import say_in_language
 import socket
 import threading
+import io
 import wave
 import speech_recognition as sr
 from config.settings import get_language, set_mode, get_mode
+from core.tts.piper import send_text_to_tts
 
 clients = set()
 clients_lock = threading.Lock()
 
-# ---- AUDIO CONTEXT HANDLING ----
-recording_context = None
 
 def _send_to_client(conn, message):
     try:
@@ -24,6 +23,7 @@ def _send_to_client(conn, message):
             pass
         with clients_lock:
             clients.discard(conn)
+
 
 def broadcast_mode_update(mode=None):
     if mode is None:
@@ -42,54 +42,8 @@ def broadcast_mode_update(mode=None):
 
     print(f"[ESP32] Broadcasted mode: {mode} to {len(clients)} clients")
 
-def send_command_to_esp32(command):
-    with clients_lock:
-        for conn in list(clients):
-            try:
-                conn.sendall((command + "\n").encode("utf-8"))
-                print(f"[ESP32] Sent command: {command}")
-                return True
-            except Exception as e:
-                print(f"[ESP32] Failed to send command: {e}")
-                clients.discard(conn)
-    return False
-
-def wait_for_audio_stream(timeout=10):
-    import time
-    start_time = time.time()
-    buffer = bytearray()
-    print("[ESP32] Waiting for audio data stream...")
-
-    while time.time() - start_time < timeout:
-        with clients_lock:
-            for conn in list(clients):
-                try:
-                    conn.settimeout(0.5)
-                    chunk = conn.recv(4096)
-                    if not chunk:
-                        continue
-
-                    buffer.extend(chunk)
-
-                    if b"AUDIO_SENT" in buffer:
-                        print("[ESP32] AUDIO_SENT detected")
-                        idx = buffer.index(b"AUDIO_SENT")
-                        return buffer[:idx]
-
-                except socket.timeout:
-                    continue
-                except Exception as e:
-                    print(f"[ESP32] Error while receiving audio: {e}")
-                    continue
-
-    print("[ESP32] ❌ Timeout: Audio not received.")
-    return None
-
-# ---- MAIN CLIENT HANDLER ----
 
 def handle_client(conn, addr):
-    global recording_context
-
     print(f"[ESP32] Connected from {addr}")
     with clients_lock:
         clients.add(conn)
@@ -103,57 +57,42 @@ def handle_client(conn, addr):
             lines = data.decode(errors="ignore").splitlines()
 
             for line in lines:
-                command = line.strip()
+                command = line.strip().upper()
                 if not command:
                     continue
 
                 print(f"[ESP32] Received: {command}")
 
-                if command.upper() == "GET_MODE":
+                if command == "GET_MODE":
                     _send_to_client(conn, f"CURRENT_MODE:{get_mode()}")
 
-                elif command.upper().startswith("RECORD_TYPE:"):
-                    recording_context = command.split(":", 1)[1].strip().lower()
-                    print(f"[ESP32] Recording context set: {recording_context}")
+                elif command == "MODE_VOICE":
+                    threading.Thread(target=handle_voice_interaction, args=(conn,), daemon=True).start()
 
-                elif command.upper() == "BEGIN_RECORDING":
-                    audio_data = wait_for_audio_stream()
-                    if not audio_data:
-                        print("[ESP32] ❌ No audio received.")
-                        return
+                elif command == "MODE_OCR":
+                    set_mode("reading")
+                    broadcast_mode_update("reading")
 
-                    print("[ESP32] ✅ Audio received. Handling context...")
-                    threading.Thread(
-                        target=handle_audio_context, 
-                        args=(audio_data, recording_context), 
-                        daemon=True
-                    ).start()
+                elif command == "MODE_OBJECT":
+                    set_mode("start")
+                    broadcast_mode_update("start")
 
-                elif command.upper() == "MODE_VOICE":
-                    threading.Thread(
-                        target=handle_voice_interaction, 
-                        args=(conn,), 
-                        daemon=True
-                    ).start()
+                elif command == "MODE_STOP":
+                    set_mode("stop")
+                    broadcast_mode_update("stop")
 
-                elif command.upper() == "MODE_LANGUAGE":
+                elif command == "AUDIO_START":
+                    audio_data = receive_audio_stream(conn)
+                    if audio_data:
+                        threading.Thread(target=transcribe_audio, args=(audio_data,), daemon=True).start()
+                
+                elif command == "MODE_LANGUAGE":
                     set_mode("language")
                     broadcast_mode_update("language")
 
                     say_in_language("Please say your preferred language", get_language(), wait_for_completion=True)
-                    _send_to_client(conn, "VOICE_PROMPT_DONE")
+                    _send_to_client(conn, "VOICE_PROMPT_DONE")  # Reuse the voice trigger
 
-                elif command.upper() == "MODE_OCR":
-                    set_mode("reading")
-                    broadcast_mode_update("reading")
-
-                elif command.upper() == "MODE_OBJECT":
-                    set_mode("start")
-                    broadcast_mode_update("start")
-
-                elif command.upper() == "MODE_STOP":
-                    set_mode("stop")
-                    broadcast_mode_update("stop")
 
     except Exception as e:
         print(f"[ESP32] Error: {e}")
@@ -168,66 +107,56 @@ def handle_client(conn, addr):
             pass
 
 
-# ---- HANDLE AUDIO BY CONTEXT ----
-
-def handle_audio_context(audio_data, context):
-    if context == "language":
-        process_language_audio(audio_data)
-    elif context == "voice":
-        transcribe_audio(audio_data)
-    else:
-        print(f"[ESP32] Unknown context: {context}")
-
 def handle_voice_interaction(conn):
     try:
         set_mode("voice")
         broadcast_mode_update("voice")
 
-        say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
-        print("[ESP32] 🔊 Prompt done. Requesting ESP32 to begin recording...")
+        text = "Hello, how may I help you?"
+        say_in_language(text, get_language(), wait_for_completion=True, priority=1)
+        print('🔊you can start recording now')
 
-        _send_to_client(conn, "RECORD_TYPE:voice")
-        _send_to_client(conn, "BEGIN_RECORDING")
+        _send_to_client(conn, "VOICE_PROMPT_DONE")
+        print("[VOICE] Prompt sent. Waiting for audio...")
     except Exception as e:
-        print(f"[VOICE] Prompt error: {e}")
+        print(f"[VOICE] TTS or prompt error: {e}")
 
-def process_language_audio(pcm_data, sample_rate=16000):
-    try:
-        audio_path = "audio_capture/lang_detect.wav"
-        with wave.open(audio_path, 'wb') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(sample_rate)
-            wf.writeframes(pcm_data)
 
-        from core.audio.audio_capture import predict_audio
-        from config import load_models as load_models_config
-        from config.settings import LANGUAGES
-        from core.database.database import save_language
+def receive_audio_stream(conn):
+    buffer = bytearray()
+    print('received audio')
+    while True:
+        chunk = conn.recv(4096)
+        if not chunk:
+            break
 
-        lang, confidence = predict_audio(audio_path, load_models_config, LANGUAGES, duration=2)
-        print(f'[LANG] You said: {lang} with {confidence*100:.1f}% confidence')
+        if b"AUDIO_END" in chunk:
+            end_index = chunk.index(b"AUDIO_END")
+            buffer.extend(chunk[:end_index])
+            break
 
-        if lang in ('english', 'twi'):
-            say_in_language(f"You chose {lang}", lang)
-        else:
-            lang = 'twi'
-            say_in_language("Could not detect. Defaulting to Twi.", lang)
+        buffer.extend(chunk)
 
-        save_language(lang)
-        set_mode(lang)
-        broadcast_mode_update(lang)
-    except Exception as e:
-        print(f"[LANG] Error processing language: {e}")
+    print(f"[AUDIO] Received {len(buffer)} bytes.")
+    return bytes(buffer)
+
 
 def transcribe_audio(pcm_data, sample_rate=16000):
     try:
+        # Save PCM as WAV to disk
         wav_path = "audio_capture/user_command.wav"
         with wave.open(wav_path, 'wb') as wf:
             wf.setnchannels(1)
             wf.setsampwidth(2)
             wf.setframerate(sample_rate)
             wf.writeframes(pcm_data)
+
+        # # Use Recognizer to transcribe the saved file
+        # recognizer = sr.Recognizer()
+        # with sr.AudioFile(wav_path) as source:
+        #     audio = recognizer.record(source)
+        # result = recognizer.recognize_google(audio)
+        # print('transcribed text: ', result)
 
         print("handling command")
         command, text = handle_command(get_language())
@@ -236,25 +165,30 @@ def transcribe_audio(pcm_data, sample_rate=16000):
         broadcast_mode_update(command)
         print(f"[VOICE] Final Command: {command} | Transcribed: {text}")
         return command
+
     except Exception as e:
-        print(f"[VOICE] Error transcribing: {e}")
+        print(f"[VOICE] Error processing audio: {e}")
         return "background"
 
-# ---- START LISTENER ----
 
 def start_esp32_listener(host="0.0.0.0", port=5678):
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind((host, port))
-    server_socket.listen(5)
-    print(f"[ESP32] Listener started on {host}:{port}")
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind((host, port))
+        server_socket.listen(5)
+        print(f"[ESP32] ✅ Listener started on {host}:{port}")
 
-    def accept_connections():
-        while True:
-            try:
-                conn, addr = server_socket.accept()
-                threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
-            except Exception as e:
-                print(f"[ESP32] Accept error: {e}")
+        def accept_connections():
+            while True:
+                try:
+                    conn, addr = server_socket.accept()
+                    print(f"[ESP32] 🔌 Accepted connection from {addr}")
+                    threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
+                except Exception as e:
+                    print(f"[ESP32] ❌ Accept error: {e}")
 
-    threading.Thread(target=accept_connections, daemon=True).start()
+        threading.Thread(target=accept_connections, daemon=True).start()
+
+    except Exception as e:
+        print(f"[ESP32] ❌ Failed to start listener: {e}")

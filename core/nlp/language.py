@@ -31,36 +31,15 @@ def set_preferred_language():
         else:
             send_text_to_tts("Please say your preferred language.", wait_for_completion=True)
 
-    print("[LANG] Requesting ESP32 to start language capture...")
-
+    print("[LANG] Sending MODE_LANGUAGE to ESP32...")
     send_command_to_esp32("MODE_LANGUAGE")
 
-    audio_data = wait_for_audio_stream()
-    if not audio_data:
-        print("[LANG] No audio received from ESP32.")
-        return 'twi'
+    import time
+    time.sleep(5)
 
-    # === Save to WAV ===
-    audio_path = "audio_capture/lang_detect.wav"
-    with wave.open(audio_path, 'wb') as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(16000)
-        wf.writeframes(audio_data)
-
-    try:
-        lang, confidence = predict_audio(audio_path, settings.load_models_config, settings.LANGUAGES, duration=2)
-        print(f'[LANG] You said {lang}, I am {confidence * 100:.2f}% confident')
-
-        if lang in ('english','twi'):
-            say_in_language(f"You chose {lang}", lang, wait_for_completion=True)
-        else:
-            lang = 'twi'
-            say_in_language(f"Could not understand, using default language {lang}", lang, wait_for_completion=True)
-
-        save_language(lang)
+    lang = get_saved_language()
+    if lang:
         return lang
-    except Exception as e:
-        print("An error occurred: ", e)
-        return settings.get_language() or 'twi'
-
+    else:
+        print("[LANG] Could not detect language, defaulting to 'twi'")
+        return 'twi'

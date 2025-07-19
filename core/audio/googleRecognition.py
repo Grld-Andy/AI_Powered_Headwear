@@ -1,7 +1,7 @@
 import speech_recognition as sr
 
 
-def recognize_speech(duration=2):
+def recognize_speech(duration=3):
     recognizer = sr.Recognizer()
     mic = sr.Microphone()
 

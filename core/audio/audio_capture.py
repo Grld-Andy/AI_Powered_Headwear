@@ -127,10 +127,16 @@ def listen():
 def listen_and_save(audio_path, duration, i=0):
     recognizer = sr.Recognizer()
 
-    with sr.Microphone() as source:
-        recognizer.adjust_for_ambient_noise(source)
-        print(f"Listening... Please speak clearly. Recording for {duration} seconds.")
-        audio_data = recognizer.record(source, duration=duration)
+    if i == 0:
+        with sr.AudioFile(audio_path) as source:
+            print('🅰first loop, using inmp441')
+            audio_data = recognizer.record(source)
+    else:
+        with sr.Microphone() as source:
+            print('🅱retires, using pc')
+            recognizer.adjust_for_ambient_noise(source)
+            print(f"Listening... Please speak clearly. Recording for {duration} seconds.")
+            audio_data = recognizer.record(source, duration=duration)
 
     with open(audio_path, "wb") as f:
         f.write(audio_data.get_wav_data())
@@ -154,17 +160,15 @@ def listen_and_save(audio_path, duration, i=0):
         return ""
 
 
-def predict_command_from_text(text):
-    classifier = CommandClassifier(training_phrases, command_labels)
-    return classifier.classify(text)
-
-
 def predict_command(audio_path, language, duration=3):
+    print('in predict command')
     if language == 'twi':
+        print("transcribing text in twi")
         transcribed_text = record_and_transcribe(duration)
         transcribed_text = translate_text(transcribed_text, lang="tw-en")
         print("Translated text: ", transcribed_text)
     else:
+        print("transcribing text in english")
         transcribed_text = listen_and_save(audio_path, duration)
 
     if transcribed_text == "":

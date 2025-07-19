@@ -20,7 +20,7 @@ def record_audio(filename="data/twi_audio.wav", duration=2, fs=44100):
     print(f"💾 Audio saved to {filename}")
 
 
-def convert_wav_to_mp3(wav_file="data/twi_audio.wav", mp3_file="data/twi_audio.mp3"):
+def convert_wav_to_mp3(wav_file="data/user_command.wav", mp3_file="data/twi_audio.mp3"):
     audio = AudioSegment.from_wav(wav_file)
     audio.export(mp3_file, format="mp3")
     print(f"🔄 Converted to {mp3_file}")
@@ -57,9 +57,9 @@ def transcribe_audio(file_path: str, language: str = "tw") -> str:
 
 
 def record_and_transcribe(language="tw", duration=4):
-    wav_file = "data/twi_audio.wav"
-    mp3_file = "data/twi_audio.mp3"
-    record_audio(wav_file, duration)
+    wav_file = "audio_capture/user_command.wav"
+    mp3_file = "audio_capture/twi_audio.mp3"
+    # record_audio(wav_file, duration)
     convert_wav_to_mp3(wav_file, mp3_file)
     return transcribe_audio(mp3_file, language)
 

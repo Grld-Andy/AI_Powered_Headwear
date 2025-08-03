@@ -10,7 +10,8 @@ from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
 from config.settings import wakeword_detected, get_mode, set_mode, get_language, set_language
-from core.socket.esp32_listener import start_esp32_listener, broadcast_mode_update
+from core.socket.gpio_listener import button_listener_thread
+
 
 # Global state variables
 awaiting_command = False
@@ -45,7 +46,7 @@ def esp32_mjpeg_stream_thread(url, frame_holder):
 def initialize_app():
     global AUDIO_COMMAND_MODEL
 
-    start_esp32_listener()
+    threading.Thread(target=button_listener_thread, daemon=True).start()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     set_language(detect_or_load_language())
     SELECTED_LANGUAGE = get_language()
@@ -53,9 +54,6 @@ def initialize_app():
     say_in_language("Hello", SELECTED_LANGUAGE, wait_for_completion=True)
 
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
-
-    # Start the ESP32 camera streaming thread
-    threading.Thread(target=esp32_mjpeg_stream_thread, args=(url, frame_holder), daemon=True).start()
 
     print("[Main] Initialization complete.")
 

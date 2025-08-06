@@ -28,6 +28,14 @@ last_play_time = 0
 LANG_MODEL = load_model(LANG_MODEL_PATH)
 
 
+def record_audio_to_file(filename, duration=4, sample_rate=16000):
+    print("[Mic] Recording...")
+    audio = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+    sd.wait()
+    write(filename, sample_rate, audio)
+    print(f"[Mic] Saved to {filename}")
+
+
 def combine_audio_files(file_list, output_path="./data/audio_capture/combined_audio.wav", wait_for_completion=False,
                         priority=0):
     global last_play_time

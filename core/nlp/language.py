@@ -1,18 +1,11 @@
-from core.audio.audio_capture import predict_audio
+import os
+import time
+from core.audio.audio_capture import predict_audio, record_audio_to_file  # Assuming you have this
 import config.settings as settings
 from config.settings import LANG_AUDIO_FILE, LANGUAGES
 import config.load_models as load_models_config
 from core.database.database import setup_db, get_saved_language, save_language
-from twi_stuff.translate_and_say import translate_and_play
 from utils.say_in_language import say_in_language
-
-from core.socket.esp32_listener import clients, _send_to_client, receive_audio_stream
-
-
-def detect_or_load_language():
-    setup_db()
-    lang = get_saved_language()
-    return lang if lang else set_preferred_language()
 
 
 def set_preferred_language():
@@ -26,32 +19,26 @@ def set_preferred_language():
         else:
             say_in_language("Please say your preferred language.", 'english', wait_for_completion=True, priority=1)
 
-    # Step 2: Send voice prompt request to ESP32
-    for conn in list(clients):
-        try:
-            _send_to_client(conn, "VOICE_PROMPT_DONE")
-            print("[LANG] Waiting for ESP32 audio...")
+    # Step 2: Record audio from laptop microphone
+    try:
+        print("[LANG] Listening via laptop microphone...")
+        record_audio_to_file(LANG_AUDIO_FILE, duration=4)  # Record 4 seconds
 
-            audio_data = receive_audio_stream(conn)
-            if audio_data:
-                with open(LANG_AUDIO_FILE, "wb") as f:
-                    f.write(audio_data)
+        # Step 3: Predict language from recorded audio
+        lang, confidence = predict_audio(LANG_AUDIO_FILE, load_models_config, LANGUAGES)
+        print(f"[LANG] You said {lang}, I am {confidence * 100:.2f}% confident")
 
-                # Step 4: Predict language from audio
-                lang, confidence = predict_audio(LANG_AUDIO_FILE, load_models_config, LANGUAGES)
-                print(f"[LANG] You said {lang}, I am {confidence * 100:.2f}% confident")
+        if lang in ('english', 'twi'):
+            say_in_language(f"You chose {lang}", lang, wait_for_completion=True)
+        else:
+            lang = 'twi'
+            say_in_language(f"Could not understand, using default language {lang}", lang, wait_for_completion=True)
 
-                if lang in ('english', 'twi'):
-                    say_in_language(f"You chose {lang}", lang, wait_for_completion=True)
-                else:
-                    lang = 'twi'
-                    say_in_language(f"Could not understand, using default language {lang}", lang, wait_for_completion=True)
+        save_language(lang)
+        return lang
 
-                save_language(lang)
-                return lang
+    except Exception as e:
+        print("[LANG] Error during language selection:", e)
 
-        except Exception as e:
-            print("[LANG] Error during language selection:", e)
-
-    # Fallback if something went wrong
+    # Fallback
     return settings.get_language() or "twi"

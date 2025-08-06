@@ -10,7 +10,7 @@ from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
 from config.settings import wakeword_detected, get_mode, set_mode, get_language, set_language
-from core.socket.gpio_listener import button_listener_thread
+# from core.socket.gpio_listener import button_listener_thread
 
 
 # Global state variables
@@ -46,7 +46,7 @@ def esp32_mjpeg_stream_thread(url, frame_holder):
 def initialize_app():
     global AUDIO_COMMAND_MODEL
 
-    threading.Thread(target=button_listener_thread, daemon=True).start()
+    # threading.Thread(target=button_listener_thread, daemon=True).start()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     set_language(detect_or_load_language())
     SELECTED_LANGUAGE = get_language()
@@ -67,22 +67,21 @@ def run_main_loop():
     frame_skip = 2
     frame_count = 0
 
+    key_mode_map = {
+        ord('v'): "voice",
+        ord('r'): "reading",
+        ord('o'): "start",       # object detection
+        ord('s'): "stop",
+        ord('l'): "language",
+        ord('q'): "shutdown"
+    }
+
     while True:
-        current_mode = get_mode()  # Always get the latest mode
+        current_mode = get_mode()
 
-        # Wake word triggered
-        # if wakeword_detected.is_set() and not awaiting_command:
-        #     awaiting_command = True
-        #     new_mode, transcribed_text = handle_command(get_language())
-        #     set_mode(new_mode)
-        #     broadcast_mode_update(new_mode)
-        #     awaiting_command = False
-        #     wakeword_detected.clear()
-
-        # Get the latest frame from ESP32
+        # Get latest camera frame (if using camera)
         frame = frame_holder.get('frame')
         if frame is None:
-            print("Waiting for ESP32 frame...")
             time.sleep(0.05)
             continue
 
@@ -91,7 +90,20 @@ def run_main_loop():
         if frame_count % frame_skip != 0:
             continue
 
+        # Get key input
         key = cv2.waitKey(1) & 0xFF
+        if key in key_mode_map:
+            new_mode = key_mode_map[key]
+            print(f"[KEYBOARD] Key '{chr(key)}' pressed. Switching to mode: {new_mode}")
+            set_mode(new_mode)
+
+            if new_mode == "voice":
+                say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
+                record_and_transcribe()
+
+            elif new_mode == "language":
+                say_in_language("Please say your preferred language", get_language(), wait_for_completion=True)
+
         if key == ord('q') or current_mode == "shutdown":
             break
 

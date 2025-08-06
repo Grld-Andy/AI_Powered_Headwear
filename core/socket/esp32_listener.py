@@ -6,7 +6,6 @@ import io
 import wave
 import speech_recognition as sr
 from config.settings import get_language, set_mode, get_mode
-from core.tts.piper import send_text_to_tts
 
 clients = set()
 clients_lock = threading.Lock()

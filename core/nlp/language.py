@@ -1,5 +1,4 @@
 from core.audio.audio_capture import predict_audio
-from core.tts.piper import send_text_to_tts
 import config.settings as settings
 from config.settings import LANG_AUDIO_FILE, LANGUAGES
 import config.load_models as load_models_config
@@ -19,21 +18,20 @@ def detect_or_load_language():
 def set_preferred_language():
     # Step 1: Prompt the user to speak their preferred language
     if not settings.get_language():
-        send_text_to_tts("Please say your preferred language.", wait_for_completion=True)
-        translate_and_play("Please, what language do you prefer", wait_for_completion=True)
+        say_in_language("Please say your preferred language.", 'english', wait_for_completion=True, priority=1)
+        say_in_language("Please, what language do you prefer", 'twi', wait_for_completion=True, priority=1)
     else:
         if settings.get_language() == 'twi':
-            translate_and_play("Please, what language do you prefer", wait_for_completion=True)
+            say_in_language("Please, what language do you prefer", 'twi', wait_for_completion=True, priority=1)
         else:
-            send_text_to_tts("Please say your preferred language.", wait_for_completion=True)
+            say_in_language("Please say your preferred language.", 'english', wait_for_completion=True, priority=1)
 
     # Step 2: Send voice prompt request to ESP32
-    for conn in list(clients):  # Use a copy to avoid concurrency issues
+    for conn in list(clients):
         try:
-            _send_to_client(conn, "VOICE_PROMPT_DONE")  # ESP32 will send AUDIO_START + audio + AUDIO_END
+            _send_to_client(conn, "VOICE_PROMPT_DONE")
             print("[LANG] Waiting for ESP32 audio...")
 
-            # Step 3: Receive audio from ESP32
             audio_data = receive_audio_stream(conn)
             if audio_data:
                 with open(LANG_AUDIO_FILE, "wb") as f:

@@ -6,10 +6,7 @@ from config.settings import FRAME_INTERVAL, DEPTH_INTERVAL, translated_labels, t
     wakeword_detected
 from config.load_models import yolo_model
 from core.vision.object_detection import run_object_detection
-from core.audio.audio_capture import combine_audio_files
-from core.tts.piper import send_text_to_tts
 from core.vision.depth_estimation import load_depth_model, run_depth_estimation
-from twi_stuff.translate_and_say import translate_and_play
 from utils.say_in_language import say_in_language
 
 midas_net = load_depth_model()

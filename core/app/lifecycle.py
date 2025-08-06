@@ -29,7 +29,7 @@ frame_holder = {'frame': None}
 
 
 def esp32_mjpeg_stream_thread(url, frame_holder):
-    cap = cv2.VideoCapture(url)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print(f"[ESP32 Camera Thread] Failed to open stream: {url}")
         return
@@ -61,6 +61,7 @@ def initialize_app():
 def run_main_loop():
     global awaiting_command, wakeword_processing, transcribed_text
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
+    threading.Thread(target=esp32_mjpeg_stream_thread, args=(0, frame_holder), daemon=True).start()
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None
@@ -70,7 +71,7 @@ def run_main_loop():
     key_mode_map = {
         ord('v'): "voice",
         ord('r'): "reading",
-        ord('o'): "start",       # object detection
+        ord('o'): "start",
         ord('s'): "stop",
         ord('l'): "language",
         ord('q'): "shutdown"
@@ -99,7 +100,6 @@ def run_main_loop():
 
             if new_mode == "voice":
                 say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
-                record_and_transcribe()
 
             elif new_mode == "language":
                 say_in_language("Please say your preferred language", get_language(), wait_for_completion=True)

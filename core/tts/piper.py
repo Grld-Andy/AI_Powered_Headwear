@@ -1,36 +1,37 @@
-import os
+import threading
 import time
-import requests
+import pyttsx3
 from config.settings import tts_lock, last_play_time
-from core.audio.audio_capture import play_audio_winsound
 
+tts_engine = pyttsx3.init()
+tts_engine.setProperty('rate', 150)
+tts_engine.setProperty('volume', 1.0)
+
+def _speak_background(text):
+    try:
+        print("[Speaking]: ", text)
+        tts_engine.say(text)
+        tts_engine.runAndWait()
+    except Exception as e:
+        print("TTS Error (background):", e)
 
 def send_text_to_tts(text, wait_for_completion=False, priority=0, volume=1):
     global last_play_time
-    if not tts_lock.acquire(blocking=False):
-        if not priority:
-            return
-        # high-priority: try again after a brief wait or force reset
-        tts_lock.acquire()
-    current_time = time.time()
 
-    if priority == 0 and (current_time - last_play_time < 1.5):
-        tts_lock.release()
-        return
-
-    url = 'http://localhost:5000'
-    outputFilename = 'audio_capture/output.wav'
-    payload = {'text': text}
+    tts_lock.acquire()  # Remove blocking check for now
 
     try:
-        response = requests.get(url, params=payload)
-        os.makedirs(os.path.dirname(outputFilename), exist_ok=True)
-        with open(outputFilename, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=128):
-                f.write(chunk)
-        play_audio_winsound(outputFilename, wait_for_completion)
+        tts_engine.setProperty('volume', volume)
+
+        if wait_for_completion:
+            print("[Speaking]: ", text)
+            tts_engine.say(text)
+            tts_engine.runAndWait()
+        else:
+            threading.Thread(target=_speak_background, args=(text,), daemon=True).start()
+
         last_play_time = time.time()
     except Exception as e:
-        print("Exception: ", e)
+        print("TTS Error:", e)
     finally:
         tts_lock.release()

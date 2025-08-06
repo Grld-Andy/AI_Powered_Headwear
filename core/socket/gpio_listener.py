@@ -6,7 +6,6 @@ import wave
 from config.settings import set_mode, get_mode, get_language
 from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
-from core.tts.piper import send_text_to_tts
 
 # GPIO pin mapping to mode names
 BUTTONS = {

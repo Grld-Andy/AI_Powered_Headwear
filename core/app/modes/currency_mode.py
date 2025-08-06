@@ -1,5 +1,4 @@
 from core.vision.currency import calculate_currency
-from core.tts.piper import send_text_to_tts
 from utils.say_in_language import say_in_language
 
 

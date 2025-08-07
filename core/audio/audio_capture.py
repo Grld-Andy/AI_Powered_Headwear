@@ -2,7 +2,6 @@ import os
 import time
 import librosa
 import winsound
-import requests
 import threading
 import numpy as np
 import sounddevice as sd
@@ -128,26 +127,20 @@ def listen():
 
 def listen_and_save(audio_path, duration, i=0):
     recognizer = sr.Recognizer()
-
-    if i == 0:
-        with sr.AudioFile(audio_path) as source:
-            print('🅰first loop, using inmp441')
-            audio_data = recognizer.record(source)
-    else:
+    try:
         with sr.Microphone() as source:
-            print('🅱retires, using pc')
+            print(f"🎤 Using PC microphone. Attempt {i + 1}")
             recognizer.adjust_for_ambient_noise(source)
             print(f"Listening... Please speak clearly. Recording for {duration} seconds.")
             audio_data = recognizer.record(source, duration=duration)
 
-    with open(audio_path, "wb") as f:
-        f.write(audio_data.get_wav_data())
-
-    try:
+        with open(audio_path, "wb") as f:
+            f.write(audio_data.get_wav_data())
         print("📝 Transcribing...")
         transcribed_text = recognizer.recognize_google(audio_data)
         print(f"🗣 Transcribed Text: '{transcribed_text}'")
         return transcribed_text
+
     except sr.UnknownValueError:
         print("Could not understand audio.")
         if i < 2:
@@ -156,10 +149,17 @@ def listen_and_save(audio_path, duration, i=0):
         else:
             speak("Sorry, I'm still having trouble understanding you.")
             return ""
+
     except sr.RequestError as e:
         print(f"Google request failed: {e}")
         speak("Please check your network connection and try again.")
         return ""
+
+    except OSError as e:
+        print(f"Microphone error: {e}")
+        speak("No microphone was found or it isn't working.")
+        return ""
+
 
 
 def predict_command(audio_path, language, duration=3):

@@ -39,7 +39,7 @@ def _speak_background(text):
         print("TTS Error (background):", e)
 
 
-def send_text_to_tts(text, wait_for_completion=False, volume=1.0):
+def send_text_to_tts(text, wait_for_completion=False, priority=0, volume=1):
     global last_play_time
 
     with tts_lock:

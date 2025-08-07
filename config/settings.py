@@ -7,7 +7,7 @@ import threading
 last_frame_time = 0
 last_depth_time = 0
 DEPTH_INTERVAL = 7  # seconds between depth estimation
-FRAME_INTERVAL = 1 / 15  # target ~15 FPS (adjust as needed)
+FRAME_INTERVAL = 1 / 5 # target ~15 FPS (adjust as needed)
 cached_depth_vis = None
 cached_depth_raw = None
 SELECTED_LANGUAGE = ''

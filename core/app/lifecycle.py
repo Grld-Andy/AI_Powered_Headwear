@@ -1,15 +1,13 @@
 import cv2
 import time
 import threading
-import numpy as np
-
 from core.app.mode_handler import process_mode
 from tensorflow.keras.models import load_model
 from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
-from config.settings import wakeword_detected, get_mode, set_mode, get_language, set_language
+from config.settings import get_mode, set_mode, get_language, set_language
 # from core.socket.gpio_listener import button_listener_thread
 
 
@@ -98,11 +96,9 @@ def run_main_loop():
             print(f"[KEYBOARD] Key '{chr(key)}' pressed. Switching to mode: {new_mode}")
             set_mode(new_mode)
 
-            # if new_mode == "voice":
-            #     say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
-
-            # elif new_mode == "reset":
-            #     say_in_language("Please say your preferred language", get_language(), wait_for_completion=True)
+            if new_mode == "voice":
+                say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
+                handle_command(get_language())
 
         if key == ord('q') or current_mode == "shutdown":
             break

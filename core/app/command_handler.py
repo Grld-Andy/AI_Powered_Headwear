@@ -1,9 +1,7 @@
-from core.audio.audio_capture import play_audio_winsound, predict_command
+from core.audio.audio_capture import predict_command
 from core.tts.piper import send_text_to_tts
-from config.settings import translated_phrases, COMMAND_CLASSES
 from twi_stuff.translate_and_say import translate_and_play
 from utils.say_in_language import say_in_language
-from twi_stuff.eng_to_twi import translate_text
 
 
 def handle_command(language):

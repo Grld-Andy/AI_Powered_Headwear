@@ -6,8 +6,11 @@ from config.settings import tts_lock, last_play_time
 tts_engine = pyttsx3.init()
 tts_engine.setProperty('rate', 150)
 
-current_volume = 0.8
+current_volume = 1.0
 tts_engine.setProperty('volume', current_volume)
+
+def get_volume():
+    return current_volume
 
 
 def set_volume(vol):
@@ -36,12 +39,12 @@ def _speak_background(text):
         print("TTS Error (background):", e)
 
 
-def send_text_to_tts(text, wait_for_completion=False):
+def send_text_to_tts(text, wait_for_completion=False, volume=1.0):
     global last_play_time
 
     with tts_lock:
         try:
-            tts_engine.setProperty('volume', current_volume)
+            tts_engine.setProperty('volume', volume)
 
             if wait_for_completion:
                 print("[Speaking]:", text)

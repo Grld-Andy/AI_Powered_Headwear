@@ -2,9 +2,9 @@ import threading
 import cv2
 import time
 from collections import Counter
-from config.settings import FRAME_INTERVAL, DEPTH_INTERVAL, translated_labels, translated_numbers, translated_phrases, \
-    wakeword_detected
+from config.settings import FRAME_INTERVAL, DEPTH_INTERVAL, translated_labels, translated_numbers, wakeword_detected
 from config.load_models import yolo_model
+from core.tts.piper import get_volume
 from core.vision.object_detection import run_object_detection
 from core.vision.depth_estimation import load_depth_model, run_depth_estimation
 from utils.say_in_language import say_in_language
@@ -26,8 +26,7 @@ def run_background_vision(frame_func, language_func, last_frame_time, last_depth
         time.sleep(FRAME_INTERVAL)
 
 
-def handle_vision_mode(frame, language, last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw,
-                       volume=1.0):
+def handle_vision_mode(frame, language, last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw):
     current_time = time.time()
     if current_time - last_frame_time < FRAME_INTERVAL:
         return cached_depth_vis, cached_depth_raw, last_frame_time, last_depth_time
@@ -62,13 +61,13 @@ def handle_vision_mode(frame, language, last_frame_time, last_depth_time, cached
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
     if close_objects:
-        announce_detected_objects(language, close_objects, volume)
+        announce_detected_objects(language, close_objects)
 
     cv2.imshow("Camera View", small_frame)
     return cached_depth_vis, cached_depth_raw, last_frame_time, last_depth_time
 
 
-def announce_detected_objects(language, objects, volume=0.5):
+def announce_detected_objects(language, objects):
     parts = []
     wav_files = []
     counts = Counter(objects)
@@ -84,6 +83,6 @@ def announce_detected_objects(language, objects, volume=0.5):
         threading.Thread(
             target=say_in_language,
             args=(sentence, language,),
-            kwargs={'wait_for_completion': False},
+            kwargs={'wait_for_completion': False, 'volume': get_volume()},
             daemon=True
         ).start()

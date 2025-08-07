@@ -14,9 +14,9 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from config.settings import (
     LANG_MODEL_PATH, N_MFCC, MAX_TIMESTEPS, COMMAND_CLASSES, command_labels, training_phrases
 )
-from core.tts.python_ttsx3 import speak
 from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.twi_recognition import record_and_transcribe
+from utils import say_in_language
 
 # Audio event globals
 tts_lock = threading.Lock()
@@ -144,20 +144,20 @@ def listen_and_save(audio_path, duration, i=0):
     except sr.UnknownValueError:
         print("Could not understand audio.")
         if i < 2:
-            speak("I didn't get that. Could you please try again?")
+            say_in_language("I didn't get that. Could you please try again?", wait_for_completion=True, priority=1)
             return listen_and_save(audio_path, duration, i=i + 1)
         else:
-            speak("Sorry, I'm still having trouble understanding you.")
+            say_in_language("Sorry, I'm still having trouble understanding you.", wait_for_completion=True, priority=1)
             return ""
 
     except sr.RequestError as e:
         print(f"Google request failed: {e}")
-        speak("Please check your network connection and try again.")
+        say_in_language("Please check your network connection and try again.", wait_for_completion=True, priority=1)
         return ""
 
     except OSError as e:
         print(f"Microphone error: {e}")
-        speak("No microphone was found or it isn't working.")
+        say_in_language("No microphone was found or it isn't working.", wait_for_completion=True, priority=1)
         return ""
 
 

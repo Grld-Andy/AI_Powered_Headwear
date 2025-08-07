@@ -63,6 +63,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "reset":
         set_language(set_preferred_language())
+        # current_mode == "start"
         return frame, "start"
 
     elif current_mode == "location":

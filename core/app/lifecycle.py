@@ -73,7 +73,7 @@ def run_main_loop():
         ord('r'): "reading",
         ord('o'): "start",
         ord('s'): "stop",
-        ord('l'): "language",
+        ord('l'): "reset",
         ord('q'): "shutdown"
     }
 
@@ -98,11 +98,11 @@ def run_main_loop():
             print(f"[KEYBOARD] Key '{chr(key)}' pressed. Switching to mode: {new_mode}")
             set_mode(new_mode)
 
-            if new_mode == "voice":
-                say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
+            # if new_mode == "voice":
+            #     say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
 
-            elif new_mode == "language":
-                say_in_language("Please say your preferred language", get_language(), wait_for_completion=True)
+            # elif new_mode == "reset":
+            #     say_in_language("Please say your preferred language", get_language(), wait_for_completion=True)
 
         if key == ord('q') or current_mode == "shutdown":
             break

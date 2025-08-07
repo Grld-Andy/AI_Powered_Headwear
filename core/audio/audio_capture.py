@@ -16,7 +16,7 @@ from config.settings import (
 )
 from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.twi_recognition import record_and_transcribe
-from utils import say_in_language
+from utils.say_in_language import say_in_language
 
 # Audio event globals
 tts_lock = threading.Lock()

@@ -1,14 +1,12 @@
 import threading
 import time
 import pyttsx3
-from config.settings import tts_lock, last_play_time  # Assumes these are defined properly
+from config.settings import tts_lock, last_play_time
 
-# Initialize TTS engine
 tts_engine = pyttsx3.init()
 tts_engine.setProperty('rate', 150)
 
-# Track current volume
-current_volume = 0.8  # default volume
+current_volume = 0.8
 tts_engine.setProperty('volume', current_volume)
 
 
@@ -43,7 +41,6 @@ def send_text_to_tts(text, wait_for_completion=False):
 
     with tts_lock:
         try:
-            # Use the current volume set globally
             tts_engine.setProperty('volume', current_volume)
 
             if wait_for_completion:

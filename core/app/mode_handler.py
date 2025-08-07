@@ -7,9 +7,9 @@ from core.app.modes.digital_services_mode.mobile_network import handle_save_cont
 from core.app.modes.passive_camera_mode import handle_stop_mode
 from core.app.modes.vision_mode import handle_vision_mode, run_background_vision, stop_vision
 from core.app.modes.reading_mode import handle_reading_mode
-from core.app.modes.volume_control_mode import increase_volume, decrease_volume
 from core.nlp.language import set_preferred_language
 from core.nlp.llm_handler import handle_chat_mode
+from core.tts.piper import decrease_volume, increase_volume
 from core.tts.python_ttsx3 import speak
 from utils.say_in_language import say_in_language
 

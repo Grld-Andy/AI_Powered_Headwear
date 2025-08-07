@@ -7,3 +7,4 @@ def say_in_language(text, language, wait_for_completion=False, priority=0, volum
         translate_and_play(text, wait_for_completion)
     else:
         send_text_to_tts(text, wait_for_completion, priority, volume=volume)
+        print("done speaking:", text)

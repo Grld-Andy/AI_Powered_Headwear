@@ -97,7 +97,8 @@ def run_main_loop():
             set_mode(new_mode)
 
             if new_mode == "voice":
-                say_in_language("Hello, how may I help you?", get_language(), wait_for_completion=True)
+                print("Awaiting your command")
+                say_in_language("Hello, how may I help you?", get_language(), priority=1, wait_for_completion=True)
                 handle_command(get_language())
 
         if key == ord('q') or current_mode == "shutdown":

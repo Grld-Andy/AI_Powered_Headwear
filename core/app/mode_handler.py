@@ -77,7 +77,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         set_language(set_preferred_language())
         return frame, "start"
 
-    elif current_mode == "location":
+    elif current_mode == "current_location":
+        print('getting current location')
         return frame, "start"
 
     elif current_mode == "chat":

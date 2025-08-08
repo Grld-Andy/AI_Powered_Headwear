@@ -94,7 +94,11 @@ command_labels = [
     # get contact
     "get_contact", "get_contact", "get_contact", "get_contact"
 ]
-COMMAND_CLASSES = ["background", "reading", "start", "stop", "reset", "count"]
+COMMAND_CLASSES = [
+    "background", "reading", "start", "stop", "reset", "count",
+    "current_location", "navigate", "bookmark_location", "save_contact",
+    "send_money", "time", "hotspots", "chat", "shutdown", "get_contact"
+]
 last_play_time = 0
 tts_lock = threading.Lock()
 audio_playing = threading.Event()

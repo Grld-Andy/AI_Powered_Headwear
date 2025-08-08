@@ -99,7 +99,8 @@ def run_main_loop():
             if new_mode == "voice":
                 print("Awaiting your command")
                 say_in_language("Hello, how may I help you?", get_language(), priority=1, wait_for_completion=True)
-                new_mode, transcribed_text = handle_command(get_language())
+                got_mode, transcribed_text = handle_command(get_language())
+                set_mode(got_mode)
 
         if key == ord('q') or current_mode == "shutdown":
             break

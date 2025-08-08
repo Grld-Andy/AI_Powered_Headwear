@@ -1,5 +1,6 @@
 import datetime
 from core.tts.piper import send_text_to_tts
+from utils.say_in_language import say_in_language
 
 
 def get_current_time(language):
@@ -7,5 +8,5 @@ def get_current_time(language):
     now = datetime.datetime.now()
     formatted_time = now.strftime("%A, %B %d, %Y. The time is %I:%M %p.")
     print("Current time:", formatted_time)
-    send_text_to_tts(f"Today's date is {formatted_time}", language, wait_for_completion=True, priority=1)
+    say_in_language(f"Today's date is {formatted_time}", language, wait_for_completion=True, priority=1)
     return

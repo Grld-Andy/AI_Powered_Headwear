@@ -1,10 +1,11 @@
 import os
 import time
 import librosa
-import winsound
+import requests
 import threading
 import numpy as np
 import sounddevice as sd
+import subprocess
 from pydub import AudioSegment
 from scipy.io.wavfile import write
 import speech_recognition as sr
@@ -14,7 +15,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from config.settings import (
     LANG_MODEL_PATH, N_MFCC, MAX_TIMESTEPS, COMMAND_CLASSES, command_labels, training_phrases
 )
-from core.tts.piper import send_text_to_tts
+from core.tts.python_ttsx3 import speak
 from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.twi_recognition import record_and_transcribe
 
@@ -77,22 +78,42 @@ def combine_audio_files(file_list, output_path="./data/audio_capture/combined_au
         tts_lock.release()
 
 
-def record_audio(path, duration=3, fs=44100):
-    print("[Mic] Recording...")
+def record_audio(path, duration=3, fs=22050):
     audio = sd.rec(int(duration * fs), samplerate=fs, channels=1)
     sd.wait()
     write(path, fs, audio)
-    print(f"[Mic] Saved to {path}")
 
 
 def play_audio_winsound(filename, wait_for_completion=False):
+    """Optimized playback for Raspberry Pi:
+    - Uses 'aplay' for instant WAV playback.
+    - Falls back to pydub if file format is unsupported by aplay.
+    """
     if not os.path.isfile(filename):
         print(f"[ERROR] File not found: {filename}")
         return
-    flags = winsound.SND_FILENAME
-    if not wait_for_completion:
-        flags |= winsound.SND_ASYNC
-    winsound.PlaySound(filename, flags)
+
+    # aplay works best with WAV files
+    if filename.lower().endswith(".wav"):
+        try:
+            if wait_for_completion:
+                subprocess.run(["aplay", "-q", filename], check=False)
+            else:
+                subprocess.Popen(["aplay", "-q", filename])
+            return
+        except Exception as e:
+            print(f"[WARN] aplay failed, falling back to pydub: {e}")
+
+    # Fallback: use pydub for non-WAV or if aplay fails
+    try:
+        from pydub.playback import play
+        audio = AudioSegment.from_file(filename)
+        if wait_for_completion:
+            play(audio)
+        else:
+            threading.Thread(target=play, args=(audio,), daemon=True).start()
+    except Exception as e:
+        print(f"[ERROR] Failed to play audio: {e}")
 
 
 def predict_audio(audio_path, model, classes, duration=2):
@@ -127,39 +148,38 @@ def listen():
 
 def listen_and_save(audio_path, duration, i=0):
     recognizer = sr.Recognizer()
-    try:
+
+    if i == 0:
+        with sr.AudioFile(audio_path) as source:
+            print('📡 first loop, using inmp441')
+            audio_data = recognizer.record(source)
+    else:
         with sr.Microphone() as source:
-            print(f"🎤 Using PC microphone. Attempt {i + 1}")
+            print('🎙 retries, using mic')
             recognizer.adjust_for_ambient_noise(source)
             print(f"Listening... Please speak clearly. Recording for {duration} seconds.")
             audio_data = recognizer.record(source, duration=duration)
 
-        with open(audio_path, "wb") as f:
-            f.write(audio_data.get_wav_data())
+    with open(audio_path, "wb") as f:
+        f.write(audio_data.get_wav_data())
+
+    try:
         print("📝 Transcribing...")
         transcribed_text = recognizer.recognize_google(audio_data)
-        print(f"🗣 Transcribed Text: '{transcribed_text}'")
+        print(f"📜 Transcribed Text: '{transcribed_text}'")
         return transcribed_text
-
     except sr.UnknownValueError:
         print("Could not understand audio.")
         if i < 2:
-            send_text_to_tts("I didn't get that. Could you please try again?", wait_for_completion=True, priority=1)
+            speak("I didn't get that. Could you please try again?")
             return listen_and_save(audio_path, duration, i=i + 1)
         else:
-            send_text_to_tts("Sorry, I'm still having trouble understanding you.", wait_for_completion=True, priority=1)
+            speak("Sorry, I'm still having trouble understanding you.")
             return ""
-
     except sr.RequestError as e:
         print(f"Google request failed: {e}")
-        send_text_to_tts("Please check your network connection and try again.", wait_for_completion=True, priority=1)
+        speak("Please check your network connection and try again.")
         return ""
-
-    except OSError as e:
-        print(f"Microphone error: {e}")
-        send_text_to_tts("No microphone was found or it isn't working.", wait_for_completion=True, priority=1)
-        return ""
-
 
 
 def predict_command(audio_path, language, duration=3):
@@ -179,6 +199,6 @@ def predict_command(audio_path, language, duration=3):
     print(f"this is what you said {transcribed_text}")
     classifier = CommandClassifier(training_phrases, command_labels)
     predicted_label = classifier.classify(transcribed_text)
-    print(f"🔮 Predicted Class: {predicted_label}")
+    print(f"🔍 Predicted Class: {predicted_label}")
 
     return predicted_label, transcribed_text

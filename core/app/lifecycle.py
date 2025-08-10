@@ -23,11 +23,13 @@ transcribed_text = None
 
 # ESP32 stream URL
 url = "http://10.156.184.165:81/stream"
+mpeg_url = "http://10.102.11.67:8080/?action=stream"
 frame_holder = {'frame': None}
 
 
 def esp32_mjpeg_stream_thread(url, frame_holder):
-    cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(mpeg_url)
     if not cap.isOpened():
         print(f"[ESP32 Camera Thread] Failed to open stream: {url}")
         return

@@ -1,6 +1,11 @@
 import cv2
 import time
 import threading
+import socket
+import ipaddress
+import queue
+import requests
+
 from core.app.mode_handler import process_mode
 from tensorflow.keras.models import load_model
 from utils.say_in_language import say_in_language
@@ -21,17 +26,74 @@ cached_depth_raw = None
 AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
-# ESP32 stream URL
-url = "http://10.156.184.165:81/stream"
-mpeg_url = "http://10.102.11.67:8080/?action=stream"
+# MJPEG Streamer default port
+MJPEG_PORT = 8080
 frame_holder = {'frame': None}
 
 
-def esp32_mjpeg_stream_thread(url, frame_holder):
-    # cap = cv2.VideoCapture(0)
+# ----------------- AUTO-DETECTION CODE -----------------
+SCAN_TIMEOUT = 0.3
+found_hosts = queue.Queue()
+
+def get_local_ip():
+    """Get the Raspberry Pi's local IP address."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+def check_host(ip):
+    """Check if MJPEG Streamer is running on this IP."""
+    url = f"http://{ip}:{MJPEG_PORT}/?action=stream"
+    try:
+        r = requests.get(url, timeout=SCAN_TIMEOUT, stream=True)
+        if r.status_code == 200:
+            found_hosts.put(ip)
+    except:
+        pass
+
+def find_mjpeg_host():
+    """Scan the local network for an MJPEG Streamer server."""
+    local_ip = get_local_ip()
+    net = ipaddress.ip_network(local_ip + "/24", strict=False)
+    threads = []
+
+    print(f"🔍 Scanning network {net} for MJPEG Streamer on port {MJPEG_PORT}...")
+
+    for ip in net.hosts():
+        ip_str = str(ip)
+        if ip_str == local_ip:
+            continue
+        t = threading.Thread(target=check_host, args=(ip_str,))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    if not found_hosts.empty():
+        return found_hosts.get()
+    return None
+# -------------------------------------------------------
+
+
+def esp32_mjpeg_stream_thread(frame_holder):
+    host_ip = find_mjpeg_host()
+    if not host_ip:
+        print("❌ Could not find MJPEG Streamer on the network.")
+        return
+
+    mpeg_url = f"http://{host_ip}:{MJPEG_PORT}/?action=stream"
+    print(f"✅ Found MJPEG Streamer: {mpeg_url}")
+
     cap = cv2.VideoCapture(mpeg_url)
     if not cap.isOpened():
-        print(f"[ESP32 Camera Thread] Failed to open stream: {url}")
+        print(f"[ESP32 Camera Thread] Failed to open stream: {mpeg_url}")
         return
 
     while True:
@@ -61,7 +123,8 @@ def initialize_app():
 def run_main_loop():
     global awaiting_command, wakeword_processing, transcribed_text
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
-    threading.Thread(target=esp32_mjpeg_stream_thread, args=(0, frame_holder), daemon=True).start()
+
+    threading.Thread(target=esp32_mjpeg_stream_thread, args=(frame_holder,), daemon=True).start()
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None
@@ -80,7 +143,7 @@ def run_main_loop():
     while True:
         current_mode = get_mode()
 
-        # Get latest camera frame (if using camera)
+        # Get latest camera frame
         frame = frame_holder.get('frame')
         if frame is None:
             time.sleep(0.05)

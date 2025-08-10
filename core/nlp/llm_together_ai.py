@@ -1,11 +1,9 @@
 import os
-
-import winsound
+import subprocess
 from together import Together
 from dotenv import load_dotenv
 
 from core.audio.googleRecognition import recognize_speech
-
 import pyttsx3
 
 from twi_stuff.eng_to_twi import translate_text
@@ -41,16 +39,40 @@ def chat_with_together(
 
 
 def play_audio_winsound(filename, wait_for_completion=True):
+    """Optimized for Raspberry Pi:
+    - Uses 'aplay' for low-latency WAV playback
+    - Falls back to pydub for other formats
+    """
     if not os.path.isfile(filename):
         print(f"[ERROR] File not found: {filename}")
         return
-    flags = winsound.SND_FILENAME
-    if not wait_for_completion:
-        flags |= winsound.SND_ASYNC
-    winsound.PlaySound(filename, flags)
+
+    # Try aplay for WAV files first
+    if filename.lower().endswith(".wav"):
+        try:
+            if wait_for_completion:
+                subprocess.run(["aplay", "-q", filename], check=False)
+            else:
+                subprocess.Popen(["aplay", "-q", filename])
+            return
+        except Exception as e:
+            print(f"[WARN] aplay failed, falling back to pydub: {e}")
+
+    # Fallback: pydub playback for non-WAV files
+    try:
+        from pydub import AudioSegment
+        from pydub.playback import play
+        audio = AudioSegment.from_file(filename)
+        if wait_for_completion:
+            play(audio)
+        else:
+            import threading
+            threading.Thread(target=play, args=(audio,), daemon=True).start()
+    except Exception as e:
+        print(f"[ERROR] Failed to play audio: {e}")
 
 
-## English
+## Example English loop
 # while True:
 #     try:
 #         print('start talking')
@@ -61,7 +83,7 @@ def play_audio_winsound(filename, wait_for_completion=True):
 #     except Exception as e:
 #         continue
 
-## Twi
+## Example Twi loop
 # while True:
 #     try:
 #         print('start talking')

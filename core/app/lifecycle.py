@@ -83,26 +83,42 @@ def find_mjpeg_host():
 
 
 def esp32_mjpeg_stream_thread(frame_holder):
-    host_ip = find_mjpeg_host()
-    if not host_ip:
-        print("❌ Could not find MJPEG Streamer on the network.")
-        return
-
-    mpeg_url = f"http://{host_ip}:{MJPEG_PORT}/?action=stream"
-    print(f"✅ Found MJPEG Streamer: {mpeg_url}")
-
-    cap = cv2.VideoCapture(mpeg_url)
-    if not cap.isOpened():
-        print(f"[ESP32 Camera Thread] Failed to open stream: {mpeg_url}")
-        return
+    MJPEG_URL = None
+    cap = None
+    fail_count = 0
 
     while True:
-        ret, frame = cap.read()
-        if ret and frame is not None:
-            frame_holder['frame'] = frame
+        if MJPEG_URL is None:
+            host_ip = find_mjpeg_host()
+            if host_ip:
+                MJPEG_URL = f"http://{host_ip}:{MJPEG_PORT}/?action=stream"
+                print(f"✅ Found MJPEG Streamer: {MJPEG_URL}")
+                cap = cv2.VideoCapture(MJPEG_URL)
+                fail_count = 0
+            else:
+                print("❌ Could not find MJPEG Streamer. Retrying in 2s...")
+                time.sleep(2)
+                continue
+        if cap is not None and cap.isOpened():
+            ret, frame = cap.read()
+            if ret and frame is not None:
+                frame_holder['frame'] = frame
+                fail_count = 0
+            else:
+                fail_count += 1
+                print(f"[ESP32 Camera Thread] Failed to read frame ({fail_count}).")
+                time.sleep(0.1)
+
+            if fail_count > 20:
+                print("[ESP32 Camera Thread] Lost connection. Reconnecting...")
+                cap.release()
+                cap = None
+                MJPEG_URL = None
+                fail_count = 0
         else:
-            print("[ESP32 Camera Thread] Failed to read frame. Retrying...")
-            time.sleep(0.1)
+            MJPEG_URL = None
+            time.sleep(1)
+
 
 
 def initialize_app():

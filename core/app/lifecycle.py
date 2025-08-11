@@ -1,19 +1,18 @@
 import cv2
 import time
-import threading
-import socket
-import ipaddress
 import queue
+import socket
 import requests
-
+import ipaddress
+import threading
 from core.app.mode_handler import process_mode
 from tensorflow.keras.models import load_model
 from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
+from core.socket.gpio_listener import button_listener_thread
 from config.settings import get_mode, set_mode, get_language, set_language
-# from core.socket.gpio_listener import button_listener_thread
 
 
 # Global state variables
@@ -126,8 +125,7 @@ def esp32_mjpeg_stream_thread(frame_holder):
 
 def initialize_app():
     global AUDIO_COMMAND_MODEL
-
-    # threading.Thread(target=button_listener_thread, daemon=True).start()
+    threading.Thread(target=button_listener_thread, daemon=True).start()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     set_language(detect_or_load_language())
     SELECTED_LANGUAGE = get_language()

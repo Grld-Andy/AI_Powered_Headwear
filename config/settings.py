@@ -115,7 +115,7 @@ INTENT_CLASSIFIER_MODEL = "./models/knn_classifier.joblib"
 # LANG_MODEL = load_model(LANG_MODEL_PATH)
 # yolo_model = YOLO("./models/yolov5n.pt")
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('http://10.102.11.67:8080/?action=stream')
 
 # State variables
 wakeword_detected = threading.Event()

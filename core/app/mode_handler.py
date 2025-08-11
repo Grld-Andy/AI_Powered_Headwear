@@ -19,7 +19,6 @@ from utils.say_in_language import say_in_language
 vision_thread = None
 vision_state = VisionState()
 
-
 def process_mode(current_mode, frame, language, last_frame_time, last_depth_time,
                  cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text):
     global vision_thread, vision_state
@@ -55,7 +54,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
             vision_thread.join()
         return handle_stop_mode(frame), current_mode
 
-    # Background vision thread (for passive modes)
+    # Background vision thread (for passive modes) — DISABLED
+    """
     if vision_thread is None or not vision_thread.is_alive():
         stop_vision.clear()
         vision_thread = threading.Thread(
@@ -64,6 +64,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
             daemon=True
         )
         vision_thread.start()
+    """
 
     # Other command modes
     if current_mode == "count":

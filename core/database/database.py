@@ -39,7 +39,7 @@ def setup_db():
         device_id = random.randint(100000, 999999)
         c.execute(
             'INSERT INTO device (id, language, device_id, is_registered) VALUES (1, ?, ?, FALSE)',
-            ("en", device_id)
+            ("english", device_id)
         )
         print(f"Generated device ID: {device_id}")
         register_device_with_api(device_id)

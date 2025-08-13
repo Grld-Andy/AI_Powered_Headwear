@@ -122,6 +122,7 @@ wakeword_detected = threading.Event()
 esp32_connected = threading.Event()
 awaiting_command = False
 DATABASE = 'database.db'
+API_BASE_URL = "http://localhost:3000/api"
 
 current_mode = "start"
 def get_mode():

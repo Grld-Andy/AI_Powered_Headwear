@@ -47,15 +47,25 @@ conversation_history = [
 ]
 
 def chat_with_together(prompt: str,
-                       model: str = "google/gemma-3n-E4B-it") -> tuple[str, float]:
+                       model: str = "google/gemma-3n-E4B-it",
+                       image_path: str = None) -> tuple[str, float]:
     try:
         start_time = time.time()
         conversation_history.append({"role": "user", "content": prompt})
 
-        response = client.chat.completions.create(
-            model=model,
-            messages=conversation_history
-        )
+        if image_path:
+            with open(image_path, "rb") as img_file:
+                image_bytes = img_file.read()
+            response = client.chat.completions.create(
+                model=model,
+                messages=conversation_history,
+                files=[{"file": image_bytes, "name": "scene.png"}]
+            )
+        else:
+            response = client.chat.completions.create(
+                model=model,
+                messages=conversation_history
+            )
 
         elapsed = time.time() - start_time
         raw_output = response.choices[0].message.content

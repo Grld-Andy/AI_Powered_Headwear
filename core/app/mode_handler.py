@@ -128,4 +128,17 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         decrease_volume()
         return frozen_frame, "start"
 
+    elif current_mode == "describe_scene":
+        import cv2
+        import os
+        image_path = os.path.join("data", "captured_image.png")
+        cv2.imwrite(image_path, frame)
+        from core.nlp.llm_together_ai import chat_with_together
+        prompt = "Describe the scene in this image."
+        description, _ = chat_with_together(prompt, image_path=image_path)
+        from utils.say_in_language import say_in_language
+        say_in_language(description, language, wait_for_completion=True)
+        print(f"Scene description: {description}")
+        return frame, "start"
+
     return frozen_frame, current_mode

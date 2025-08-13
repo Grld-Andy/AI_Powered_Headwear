@@ -7,15 +7,16 @@ from core.app.modes.digital_services_mode.mobile_network import (
     handle_send_money_mode,
     handle_get_contact_mode
 )
+from core.app.modes.emergency_mode import trigger_emergency_mode
 from core.app.modes.passive_camera_mode import handle_stop_mode
 from core.app.modes.vision_mode import handle_vision_mode, run_background_vision, stop_vision, VisionState
 from core.app.modes.reading_mode import handle_reading_mode
 from core.nlp.language import set_preferred_language
 from core.nlp.llm_handler import handle_chat_mode
+from core.socket.socket_client import send_emergency_alert
 from core.tts.piper import decrease_volume, increase_volume
 from core.tts.python_ttsx3 import speak
 from utils.say_in_language import say_in_language
-from core.socket.socket_client import send_emergency_alert
 
 vision_thread = None
 vision_state = VisionState()
@@ -89,6 +90,17 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "time":
         get_current_time(language)
+        return frame, "start"
+    
+    elif current_mode == "emergency_mode":
+        send_emergency_alert(
+            device_id="123456",
+            alert_type="fall",
+            severity="critical",
+            latitude=40.7128,
+            longitude=-74.0060,
+            message="Fall detected at 2:30 PM"
+        )
         return frame, "start"
 
     elif current_mode == "save_contact":

@@ -7,6 +7,7 @@ import ipaddress
 import threading
 from core.app.mode_handler import process_mode
 from tensorflow.keras.models import load_model
+from core.socket.socket_client import start_socket_thread
 from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
@@ -141,6 +142,7 @@ def run_main_loop():
     global awaiting_command, wakeword_processing, transcribed_text
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
 
+    start_socket_thread()
     threading.Thread(target=esp32_mjpeg_stream_thread, args=(frame_holder,), daemon=True).start()
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
@@ -154,7 +156,9 @@ def run_main_loop():
         ord('o'): "start",
         ord('s'): "stop",
         ord('l'): "reset",
-        ord('q'): "shutdown"
+        ord('q'): "shutdown",
+        ord('c'): "chat",
+        ord('e'): "emergency_mode"
     }
 
     while True:

@@ -60,6 +60,8 @@ english_training_phrases = [
     "shut down the device", "turn off the system", "power off", "shutdown now",
     # get contact
     "get a phone number", "find contact info", "show me my contacts", "retrieve a phone number",
+    # emergency_mode
+    "help me", "emergency", "call for help", "alert authorities", "I need help now", "danger", "urgent assistance"
 ]
 training_phrases = english_training_phrases
 command_labels = [
@@ -92,12 +94,15 @@ command_labels = [
     # shutdown
     "shutdown", "shutdown", "shutdown", "shutdown",
     # get contact
-    "get_contact", "get_contact", "get_contact", "get_contact"
+    "get_contact", "get_contact", "get_contact", "get_contact",
+    # emergency_mode
+    "emergency_mode", "emergency_mode", "emergency_mode", "emergency_mode", 
+    "emergency_mode", "emergency_mode", "emergency_mode"
 ]
 COMMAND_CLASSES = [
     "background", "reading", "start", "stop", "reset", "count",
     "current_location", "navigate", "bookmark_location", "save_contact",
-    "send_money", "time", "hotspots", "chat", "shutdown", "get_contact"
+    "send_money", "time", "hotspots", "chat", "shutdown", "get_contact", "emergency_mode"
 ]
 last_play_time = 0
 tts_lock = threading.Lock()

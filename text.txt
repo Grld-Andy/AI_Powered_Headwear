@@ -19,6 +19,8 @@
 		\item \textit{Resuming Operation}: To resume operation, the user activates the wake word and says 'start'. This command reactivates object detection mode, restoring the system's default functionality.
 
 		\item \textit{Location Query}: To determine their current location, the user says 'where am I' after activating the wake word. The system retrieves the device's current location and uses PiperTTS to audibly communicate this information to the user.
+		
+		\item \textit{Mobile Money Transfer}: To make digital payments to vendors.
 	\end{enumerate}
 
 	\subsection{Model Coordination}

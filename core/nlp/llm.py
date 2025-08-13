@@ -22,6 +22,8 @@ ROLE_INSTRUCTION = (
     "avoid emojis, and use simple, concise, and accessible language."
 )
 
+EXIT_KEYWORDS = {"exit", "quit", "close", "leave", "stop", "goodbye", "bye"}
+
 
 def clean_response(text: str) -> str:
     """
@@ -40,6 +42,15 @@ def clean_response(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
 
     return text
+
+
+def is_exit_command(user_input: str) -> bool:
+    """
+    Checks if the user wants to exit the chatbot.
+    """
+    if not user_input:
+        return False
+    return any(word in user_input.lower() for word in EXIT_KEYWORDS)
 
 
 def chat_with_google(prompt: str = None, image_path: str = None, history: list = None):
@@ -80,12 +91,16 @@ def chat_with_google(prompt: str = None, image_path: str = None, history: list =
 
 
 if __name__ == "__main__":
-    print("Google AI Studio Chatbot with Image Support (type 'exit' to quit)")
+    print("Google AI Studio Chatbot with Image Support (type 'exit', 'quit', 'bye' to leave)")
+
     conversation_history = None
 
     while True:
         user_input = input("You (or 'img:<path>' to send image): ")
-        if user_input.lower() == "exit":
+
+        # Detect exit intent
+        if is_exit_command(user_input):
+            print(":exit:")
             break
 
         image_file = None

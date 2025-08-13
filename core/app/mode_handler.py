@@ -15,6 +15,7 @@ from core.nlp.llm_handler import handle_chat_mode
 from core.tts.piper import decrease_volume, increase_volume
 from core.tts.python_ttsx3 import speak
 from utils.say_in_language import say_in_language
+from core.socket.socket_client import send_emergency_alert
 
 vision_thread = None
 vision_state = VisionState()

@@ -1,4 +1,7 @@
 import threading
+import os
+import cv2
+
 from config.settings import set_language
 from core.app.modes.currency_mode import handle_currency_mode
 from core.app.modes.current_time_mode import get_current_time
@@ -11,8 +14,10 @@ from core.app.modes.emergency_mode import trigger_emergency_mode
 from core.app.modes.passive_camera_mode import handle_stop_mode
 from core.app.modes.vision_mode import handle_vision_mode, run_background_vision, stop_vision, VisionState
 from core.app.modes.reading_mode import handle_reading_mode
+from core.database.database import get_device_id
 from core.nlp.language import set_preferred_language
 from core.nlp.llm_handler import handle_chat_mode
+from core.nlp.llm_together_ai import describe_scene_with_together
 from core.socket.socket_client import send_emergency_alert
 from core.tts.piper import decrease_volume, increase_volume
 from core.tts.python_ttsx3 import speak
@@ -21,55 +26,46 @@ from utils.say_in_language import say_in_language
 vision_thread = None
 vision_state = VisionState()
 
+# -------------------- Mode Handlers -------------------- #
+
+def handle_start_mode(frame, language):
+    global vision_thread, vision_state
+    stop_vision.set()
+    if vision_thread and vision_thread.is_alive():
+        vision_thread.join()
+    vis, raw, lt, dt = handle_vision_mode(frame, language, vision_state, passive=False)
+    vision_state.cached_depth_vis = vis
+    vision_state.cached_depth_raw = raw
+    vision_state.last_frame_time = lt
+    vision_state.last_depth_time = dt
+    return frame, "start"
+
+def handle_stop_vision_mode(frame):
+    stop_vision.set()
+    if vision_thread and vision_thread.is_alive():
+        vision_thread.join()
+    return handle_stop_mode(frame), "stop"
+
+def handle_describe_scene_mode(frame, language):
+    image_path = os.path.join("data", "captured_image.png")
+    os.makedirs("data", exist_ok=True)
+    cv2.imwrite(image_path, frame)
+    description, _ = describe_scene_with_together(image_path)
+    say_in_language(description, language, wait_for_completion=True)
+    print(f"Scene description: {description}")
+    return frame, "start"
+
+# -------------------- Main Dispatcher -------------------- #
+
 def process_mode(current_mode, frame, language, last_frame_time, last_depth_time,
                  cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text):
-    global vision_thread, vision_state
-
-    latest = {'frame': frame, 'language': language}
-
-    def get_frame():
-        return latest.get('frame')
-
-    def get_language():
-        return latest.get('language')
-
-    # Update latest inputs
-    latest['frame'] = frame
-    latest['language'] = language
-
-    # ACTIVE vision mode ("start")
     if current_mode == "start":
-        stop_vision.set()
-        if vision_thread and vision_thread.is_alive():
-            vision_thread.join()
-        vis, raw, lt, dt = handle_vision_mode(frame, language, vision_state, passive=False)
-        vision_state.cached_depth_vis = vis
-        vision_state.cached_depth_raw = raw
-        vision_state.last_frame_time = lt
-        vision_state.last_depth_time = dt
-        return frame, current_mode
+        return handle_start_mode(frame, language)
 
-    # STOP vision mode
     elif current_mode == "stop":
-        stop_vision.set()
-        if vision_thread and vision_thread.is_alive():
-            vision_thread.join()
-        return handle_stop_mode(frame), current_mode
+        return handle_stop_vision_mode(frame)
 
-    # Background vision thread (for passive modes) — DISABLED
-    """
-    if vision_thread is None or not vision_thread.is_alive():
-        stop_vision.clear()
-        vision_thread = threading.Thread(
-            target=run_background_vision,
-            args=(get_frame, get_language, vision_state),
-            daemon=True
-        )
-        vision_thread.start()
-    """
-
-    # Other command modes
-    if current_mode == "count":
+    elif current_mode == "count":
         return handle_currency_mode(frame, language), "start"
 
     elif current_mode == "reading":
@@ -91,10 +87,10 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
     elif current_mode == "time":
         get_current_time(language)
         return frame, "start"
-    
+
     elif current_mode == "emergency_mode":
         send_emergency_alert(
-            device_id="123456",
+            device_id=get_device_id(),
             alert_type="fall",
             severity="critical",
             latitude=40.7128,
@@ -128,19 +124,12 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         decrease_volume()
         return frozen_frame, "start"
 
+    elif current_mode == "get_device_id":
+        device_id = get_device_id()
+        say_in_language(f"Your device ID is {device_id}", language, wait_for_completion=True)
+        return frozen_frame, "start"
+
     elif current_mode == "describe_scene":
-        # Save the current frame
-        import cv2
-        import os
-        image_path = os.path.join("data", "captured_image.png")
-        cv2.imwrite(image_path, frame)
-        # Call LLM to describe the scene
-        from core.nlp.llm_together_ai import chat_with_together
-        prompt = "Describe the scene in this image."
-        description, _ = chat_with_together(prompt, image_path=image_path)
-        from utils.say_in_language import say_in_language
-        say_in_language(description, language, wait_for_completion=True)
-        print(f"Scene description: {description}")
-        return frame, "start"
+        return handle_describe_scene_mode(frame, language)
 
     return frozen_frame, current_mode

@@ -62,7 +62,10 @@ english_training_phrases = [
     "get a phone number", "find contact info", "show me my contacts", "retrieve a phone number",
     # emergency_mode
     "help me", "emergency", "call for help", "alert authorities", "I need help now", "danger", "urgent assistance",
-    "describe what is in front of me", "what does the scene look like", "tell me what you see", "describe my surroundings"
+    # describe scene
+    "describe what is in front of me", "what does the scene look like", "tell me what you see", "describe my surroundings",
+    # get_device_id
+    "what is my device id", "show me my device id", "give me my device serial", "display my device identifier"
 ]
 training_phrases = english_training_phrases
 command_labels = [
@@ -99,13 +102,16 @@ command_labels = [
     # emergency_mode
     "emergency_mode", "emergency_mode", "emergency_mode", "emergency_mode", 
     "emergency_mode", "emergency_mode", "emergency_mode",
-    "describe_scene", "describe_scene", "describe_scene", "describe_scene"
+    # describe scene
+    "describe_scene", "describe_scene", "describe_scene", "describe_scene",
+    # get_device_id
+    "get_device_id", "get_device_id", "get_device_id", "get_device_id"
 ]
 COMMAND_CLASSES = [
     "background", "reading", "start", "stop", "reset", "count",
     "current_location", "navigate", "bookmark_location", "save_contact",
     "send_money", "time", "hotspots", "chat", "shutdown",
-    "get_contact", "emergency_mode", "describe_scene"
+    "get_contact", "emergency_mode", "describe_scene", "get_device_id"
 ]
 last_play_time = 0
 tts_lock = threading.Lock()

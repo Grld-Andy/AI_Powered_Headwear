@@ -158,8 +158,9 @@ def run_main_loop():
         ord('l'): "reset",
         ord('q'): "shutdown",
         ord('c'): "chat",
-        ord('e'): "emergency_mode"
-        , ord('d'): "describe_scene"
+        ord('e'): "emergency_mode",
+        ord('d'): "describe_scene",
+        ord('i'): "get_device_id"
     }
 
     while True:
@@ -183,14 +184,6 @@ def run_main_loop():
             print(f"[KEYBOARD] Key '{chr(key)}' pressed. Switching to mode: {new_mode}")
             set_mode(new_mode)
 
-            if new_mode == "describe_scene":
-                from core.vision.capture_scene import capture_and_save_image
-                image_path = "data/captured_image.png"
-                ret, saved_path = capture_and_save_image(image_path)
-                if ret:
-                    print(f"Scene captured to {saved_path}")
-                else:
-                    print("Failed to capture scene.")
             if new_mode == "voice":
                 print("Awaiting your command")
                 say_in_language("Hello, how may I help you?", get_language(), priority=1, wait_for_completion=True)

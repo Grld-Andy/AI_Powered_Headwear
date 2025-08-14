@@ -78,6 +78,47 @@ def chat_with_together(prompt: str,
         return f"Error calling Together API: {e}", None
 
 
+def describe_scene_with_together(image_path: str,
+                                 prompt: str = "Describe the scene in this image.",
+                                 model: str = "google/gemma-3n-E4B-it") -> tuple[str, float]:
+    """
+    Sends an image to Together AI and returns a description.
+    """
+    try:
+        start_time = time.time()
+
+        with open(image_path, "rb") as img_file:
+            image_bytes = img_file.read()
+
+        # We only send this as a one-shot request for scene description
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an assistant describing images for a visually impaired person. "
+                    "Be clear, concise, and spoken-friendly. Avoid emojis."
+                )
+            },
+            {"role": "user", "content": prompt}
+        ]
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            files=[{"file": image_bytes, "name": "scene.png"}]
+        )
+
+        elapsed = time.time() - start_time
+        raw_output = response.choices[0].message.content
+        cleaned = clean_response(raw_output)
+
+        return cleaned, elapsed
+
+    except Exception as e:
+        return f"Error calling Together API: {e}", None
+
+
+
 if __name__ == "__main__":
     print("Together API Chatbot (type 'exit', 'quit', 'bye' to leave)")
 

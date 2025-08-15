@@ -3,7 +3,7 @@ import socketio
 import threading
 import time
 
-from config.settings import API_BASE_URL, BASE_URL, get_language
+from config.settings import API_BASE_URL, BASE_URL, get_language, set_mode
 from core.database.database import get_device_id
 from utils import say_in_language
 
@@ -108,5 +108,8 @@ def send_message(device_id, content, message_type="text"):
 # Listen for messages from devices
 @sio.on("new_message")
 def handle_new_message(data):
-    print(f"New message from guardian: {data['content']}")
+    print(f"[DEVICE] New message from guardian: {data['content']}")
+    set_mode("stop")
+    time.sleep(2)
     say_in_language(data['content'], get_language())
+    set_mode("start")

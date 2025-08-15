@@ -2,7 +2,6 @@ import datetime
 import threading
 import os
 import cv2
-
 from config.settings import set_language
 from core.app.modes.currency_mode import handle_currency_mode
 from core.app.modes.current_time_mode import get_current_time
@@ -26,7 +25,7 @@ from utils.say_in_language import say_in_language
 
 vision_thread = None
 vision_state = VisionState()
-current_time = datetime.now().strftime("%I:%M %p")
+current_time = datetime.datetime.now().strftime("%I:%M %p")
 
 # -------------------- Mode Handlers -------------------- #
 

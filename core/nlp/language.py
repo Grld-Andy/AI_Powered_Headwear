@@ -4,7 +4,7 @@ from core.audio.audio_capture import predict_audio, record_audio
 import config.settings as settings
 from config.settings import LANG_AUDIO_FILE, LANGUAGES
 import config.load_models as load_models_config
-from core.database.database import setup_db, get_saved_language, save_language
+from core.database.database import get_device_id, setup_db, get_saved_language, save_language
 from utils.say_in_language import say_in_language
 
 
@@ -38,10 +38,11 @@ def set_preferred_language():
         if lang in ('english', 'twi'):
             say_in_language(f"You said {lang}", lang, wait_for_completion=True)
         else:
-            lang = 'twi'
+            lang = 'english'
             say_in_language(f"Could not understand, using {lang}", lang, wait_for_completion=True)
 
         save_language(lang)
+        say_in_language(f"your device id is: {get_device_id()}", lang, wait_for_completion=True)
         return lang
 
     except Exception as e:

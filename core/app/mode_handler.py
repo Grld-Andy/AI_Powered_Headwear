@@ -26,6 +26,9 @@ from utils.say_in_language import say_in_language
 vision_thread = None
 vision_state = VisionState()
 
+# Track last major mode
+last_major_mode = "start"
+
 # -------------------- Mode Handlers -------------------- #
 
 def handle_start_mode(frame, language):
@@ -53,40 +56,48 @@ def handle_describe_scene_mode(frame, language):
     description, _ = describe_scene_with_together(image_path)
     say_in_language(description, language, wait_for_completion=True)
     print(f"Scene description: {description}")
-    return frame, "start"
+    return frame, None  # Minor mode, fallback to last major state
 
 # -------------------- Main Dispatcher -------------------- #
 
 def process_mode(current_mode, frame, language, last_frame_time, last_depth_time,
                  cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text):
+    global last_major_mode
+
+    updated_mode = None
+
     if current_mode == "start":
-        return handle_start_mode(frame, language)
+        updated_mode = "start"
+        frame, _ = handle_start_mode(frame, language)
 
     elif current_mode == "stop":
-        return handle_stop_vision_mode(frame)
+        updated_mode = "stop"
+        frame, _ = handle_stop_vision_mode(frame)
 
     elif current_mode == "count":
-        return handle_currency_mode(frame, language), "start"
+        frame, _ = handle_currency_mode(frame, language)
+        updated_mode = None
 
     elif current_mode == "reading":
         valid_frozen_frame = frozen_frame if frozen_frame is not None else frame
-        return handle_reading_mode(frame, language, valid_frozen_frame), "start"
+        frame, _ = handle_reading_mode(frame, language, valid_frozen_frame)
+        updated_mode = None
 
     elif current_mode == "reset":
         set_language(set_preferred_language())
-        return frame, "start"
+        updated_mode = None
 
     elif current_mode == "current_location":
         print('getting current location')
-        return frame, "start"
+        updated_mode = None
 
     elif current_mode == "chat":
         handle_chat_mode()
-        return frame, "chat"
+        updated_mode = None
 
     elif current_mode == "time":
         get_current_time(language)
-        return frame, "start"
+        updated_mode = None
 
     elif current_mode == "emergency_mode":
         send_emergency_alert(
@@ -97,39 +108,48 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
             longitude=-74.0060,
             message="Fall detected at 2:30 PM"
         )
-        return frame, "start"
+        updated_mode = None
 
     elif current_mode == "save_contact":
         handle_save_contact_mode(transcribed_text, language)
-        return frame, "start"
+        updated_mode = None
 
     elif current_mode == "get_contact":
         handle_get_contact_mode(language)
-        return frame, "start"
+        updated_mode = None
 
     elif current_mode == "send_money":
         handle_send_money_mode(transcribed_text, language)
-        return frame, "start"
+        updated_mode = None
 
     elif current_mode == "shutdown":
         say_in_language("Turning off", language, wait_for_completion=True, priority=1)
         speak("Shutting down the device now.")
-        return frozen_frame, "shutdown"
+        updated_mode = "shutdown"
 
     elif current_mode == "volume_up":
         increase_volume()
-        return frozen_frame, "start"
+        updated_mode = None
 
     elif current_mode == "volume_down":
         decrease_volume()
-        return frozen_frame, "start"
+        updated_mode = None
 
     elif current_mode == "get_device_id":
         device_id = get_device_id()
         say_in_language(f"Your device ID is {device_id}", language, wait_for_completion=True)
-        return frozen_frame, "start"
+        updated_mode = None
 
     elif current_mode == "describe_scene":
-        return handle_describe_scene_mode(frame, language)
+        frame, _ = handle_describe_scene_mode(frame, language)
+        updated_mode = None
 
-    return frozen_frame, current_mode
+    # Update last major mode
+    if current_mode in ["start", "stop"]:
+        last_major_mode = current_mode
+
+    # If minor mode finished, revert to last major mode
+    if updated_mode is None:
+        updated_mode = last_major_mode
+
+    return frame, updated_mode

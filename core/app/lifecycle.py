@@ -11,7 +11,6 @@ from core.audio.audio_capture import play_audio_winsound
 from config.settings import get_mode, set_mode, get_language, set_language
 # from core.socket.gpio_listener import button_listener_thread
 
-
 # Global state variables
 awaiting_command = False
 wakeword_processing = False
@@ -77,13 +76,14 @@ def run_main_loop():
         ord('q'): "shutdown",
         ord('c'): "chat",
         ord('e'): "emergency_mode",
-        ord('d'): "describe_scene"
+        ord('d'): "describe_scene",
+        ord('i'): "get_device_id"
     }
 
     while True:
         current_mode = get_mode()
 
-        # Get latest camera frame (if using camera)
+        # Get latest camera frame
         frame = frame_holder.get('frame')
         if frame is None:
             time.sleep(0.05)
@@ -100,14 +100,7 @@ def run_main_loop():
             new_mode = key_mode_map[key]
             print(f"[KEYBOARD] Key '{chr(key)}' pressed. Switching to mode: {new_mode}")
             set_mode(new_mode)
-            if new_mode == "describe_scene":
-                from core.vision.capture_scene import capture_and_save_image
-                image_path = "data/captured_image.png"
-                ret, saved_path = capture_and_save_image(image_path)
-                if ret:
-                    print(f"Scene captured to {saved_path}")
-                else:
-                    print("Failed to capture scene.")
+
             if new_mode == "voice":
                 print("Awaiting your command")
                 say_in_language("Hello, how may I help you?", get_language(), priority=1, wait_for_completion=True)
@@ -124,7 +117,7 @@ def run_main_loop():
             cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text
         )
 
-        if updated_mode != current_mode:
-            set_mode(updated_mode)
+        # Set mode returned by process_mode (handles last major state automatically)
+        set_mode(updated_mode)
 
     cv2.destroyAllWindows()

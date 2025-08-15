@@ -8,8 +8,9 @@ from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
-from config.settings import get_mode, set_mode, get_language, set_language
+from config.settings import get_mode, set_mode, get_language, set_language, pc_Ip
 # from core.socket.gpio_listener import button_listener_thread
+
 
 # Global state variables
 awaiting_command = False
@@ -22,7 +23,7 @@ AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
 # ESP32 stream URL
-url = "http://10.156.184.165:81/stream"
+url = f"http://{pc_Ip}:81/stream"
 frame_holder = {'frame': None}
 
 
@@ -83,7 +84,7 @@ def run_main_loop():
     while True:
         current_mode = get_mode()
 
-        # Get latest camera frame
+        # Get latest camera frame (if using camera)
         frame = frame_holder.get('frame')
         if frame is None:
             time.sleep(0.05)
@@ -117,7 +118,7 @@ def run_main_loop():
             cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text
         )
 
-        # Set mode returned by process_mode (handles last major state automatically)
-        set_mode(updated_mode)
+        if updated_mode != current_mode:
+            set_mode(updated_mode)
 
     cv2.destroyAllWindows()

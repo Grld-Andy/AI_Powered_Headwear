@@ -1,3 +1,4 @@
+import datetime
 import threading
 import os
 import cv2
@@ -25,9 +26,7 @@ from utils.say_in_language import say_in_language
 
 vision_thread = None
 vision_state = VisionState()
-
-# Track last major mode
-last_major_mode = "start"
+current_time = datetime.now().strftime("%I:%M %p")
 
 # -------------------- Mode Handlers -------------------- #
 
@@ -56,100 +55,83 @@ def handle_describe_scene_mode(frame, language):
     description, _ = describe_scene_with_together(image_path)
     say_in_language(description, language, wait_for_completion=True)
     print(f"Scene description: {description}")
-    return frame, None  # Minor mode, fallback to last major state
+    return frame, "start"
 
 # -------------------- Main Dispatcher -------------------- #
 
 def process_mode(current_mode, frame, language, last_frame_time, last_depth_time,
                  cached_depth_vis, cached_depth_raw, frozen_frame, transcribed_text):
-    global last_major_mode
-
-    updated_mode = None
-
     if current_mode == "start":
-        updated_mode = "start"
-        frame, _ = handle_start_mode(frame, language)
+        return handle_start_mode(frame, language)
 
     elif current_mode == "stop":
-        updated_mode = "stop"
-        frame, _ = handle_stop_vision_mode(frame)
+        return handle_stop_vision_mode(frame)
 
     elif current_mode == "count":
-        frame, _ = handle_currency_mode(frame, language)
-        updated_mode = None
+        return handle_currency_mode(frame, language), "start"
 
     elif current_mode == "reading":
         valid_frozen_frame = frozen_frame if frozen_frame is not None else frame
-        frame, _ = handle_reading_mode(frame, language, valid_frozen_frame)
-        updated_mode = None
+        return handle_reading_mode(frame, language, valid_frozen_frame), "start"
 
     elif current_mode == "reset":
         set_language(set_preferred_language())
-        updated_mode = None
+        return frame, "start"
 
     elif current_mode == "current_location":
         print('getting current location')
-        updated_mode = None
+        return frame, "start"
 
     elif current_mode == "chat":
         handle_chat_mode()
-        updated_mode = None
+        return frame, "chat"
 
     elif current_mode == "time":
         get_current_time(language)
-        updated_mode = None
+        return frame, "start"
 
     elif current_mode == "emergency_mode":
         send_emergency_alert(
-            device_id="123456",
-            alert_type="fall",
+            device_id=get_device_id(),
+            alert_type="Emergency",
             severity="critical",
             latitude=40.7128,
             longitude=-74.0060,
-            message="Fall detected at 2:30 PM"
+            message=f"Fall detected at {current_time}"
         )
-        updated_mode = None
+        return frame, "start"
 
     elif current_mode == "save_contact":
         handle_save_contact_mode(transcribed_text, language)
-        updated_mode = None
+        return frame, "start"
 
     elif current_mode == "get_contact":
         handle_get_contact_mode(language)
-        updated_mode = None
+        return frame, "start"
 
     elif current_mode == "send_money":
         handle_send_money_mode(transcribed_text, language)
-        updated_mode = None
+        return frame, "start"
 
     elif current_mode == "shutdown":
         say_in_language("Turning off", language, wait_for_completion=True, priority=1)
         speak("Shutting down the device now.")
-        updated_mode = "shutdown"
+        return frozen_frame, "shutdown"
 
     elif current_mode == "volume_up":
         increase_volume()
-        updated_mode = None
+        return frozen_frame, "start"
 
     elif current_mode == "volume_down":
         decrease_volume()
-        updated_mode = None
+        return frozen_frame, "start"
 
     elif current_mode == "get_device_id":
         device_id = get_device_id()
         say_in_language(f"Your device ID is {device_id}", language, wait_for_completion=True)
-        updated_mode = None
+        return frozen_frame, "start"
 
     elif current_mode == "describe_scene":
-        frame, _ = handle_describe_scene_mode(frame, language)
-        updated_mode = None
+        return handle_describe_scene_mode(frame, language)
 
-    # Update last major mode
-    if current_mode in ["start", "stop"]:
-        last_major_mode = current_mode
-
-    # If minor mode finished, revert to last major mode
-    if updated_mode is None:
-        updated_mode = last_major_mode
-
-    return frame, updated_mode
+    return frozen_frame, current_mode

@@ -52,8 +52,8 @@ def handle_describe_scene_mode(frame, language):
     os.makedirs("data", exist_ok=True)
     cv2.imwrite(image_path, frame)
     description, _ = describe_scene_with_together(image_path)
-    say_in_language(description, language, wait_for_completion=True)
     print(f"Scene description: {description}")
+    say_in_language(description, language, wait_for_completion=True)
     return frame, "start"
 
 # -------------------- Main Dispatcher -------------------- #
@@ -114,7 +114,6 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "shutdown":
         say_in_language("Turning off", language, wait_for_completion=True, priority=1)
-        speak("Shutting down the device now.")
         return frozen_frame, "shutdown"
 
     elif current_mode == "volume_up":

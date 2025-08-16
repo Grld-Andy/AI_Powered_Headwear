@@ -108,8 +108,9 @@ def send_message(device_id, content, message_type="text"):
 # Listen for messages from devices
 @sio.on("new_message")
 def handle_new_message(data):
-    print(f"[DEVICE] New message from guardian: {data['content']}")
+    message = data['content']
+    print(f"[DEVICE] New message from guardian: {message}")
     set_mode("stop")
     time.sleep(2)
-    say_in_language(data['content'], get_language())
+    say_in_language(message, get_language())
     set_mode("start")

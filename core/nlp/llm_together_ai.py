@@ -84,6 +84,7 @@ def describe_scene_with_together(image_path: str,
     """
     Sends an image to Together AI and returns a description.
     """
+    print("sending image to describe: ", image_path)
     try:
         start_time = time.time()
 

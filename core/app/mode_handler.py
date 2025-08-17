@@ -17,7 +17,7 @@ from core.app.modes.reading_mode import handle_reading_mode
 from core.database.database import get_device_id
 from core.nlp.language import set_preferred_language
 from core.nlp.llm_handler import handle_chat_mode
-from core.nlp.llm_together_ai import describe_scene_with_together
+from core.nlp.llm_together_ai import describe_scene_with_gemini
 from core.socket.socket_client import send_emergency_alert
 from core.tts.piper import decrease_volume, increase_volume
 from core.tts.python_ttsx3 import speak
@@ -51,9 +51,9 @@ def handle_describe_scene_mode(frame, language):
     image_path = os.path.join("data", "captured_image.png")
     os.makedirs("data", exist_ok=True)
     cv2.imwrite(image_path, frame)
-    description, _ = describe_scene_with_together(image_path)
+    description, _ = describe_scene_with_gemini(image_path)
     print(f"Scene description: {description}")
-    say_in_language(description, language, wait_for_completion=True)
+    say_in_language(f"Scene description: {description}. That is all.", language, wait_for_completion=True)
     return frame, "start"
 
 # -------------------- Main Dispatcher -------------------- #

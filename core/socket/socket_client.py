@@ -155,3 +155,11 @@ def handle_new_message(data):
     #     say_in_language("Okay, no reply sent.", lang, wait_for_completion=True)
 
     set_mode(prev_mode)
+
+
+def send_payment_to_server(amount, payee_name, payee_account):
+    sio.emit("send_money", {
+        "amount": amount,
+        "payeeName": payee_name,
+        "payeeAccount": payee_account,
+    })

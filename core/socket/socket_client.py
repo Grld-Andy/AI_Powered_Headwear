@@ -2,10 +2,11 @@ import requests
 import socketio
 import threading
 import time
-
-from config.settings import API_BASE_URL, BASE_URL, get_language, set_mode
+from config.settings import API_BASE_URL, BASE_URL, get_language, set_mode, get_mode
+from core.audio.audio_capture import listen_and_save
 from core.database.database import get_device_id
-from utils import say_in_language
+from twi_stuff.twi_recognition import record_and_transcribe
+from utils.say_in_language import say_in_language
 
 def fetch_device_token():
     device_id = get_device_id()
@@ -105,12 +106,48 @@ def send_message(device_id, content, message_type="text"):
     sio.emit("send_message", payload)
     print("[SOCKET] Message sent:", payload)
 
-# Listen for messages from devices
 @sio.on("new_message")
 def handle_new_message(data):
     message = data['content']
     print(f"[DEVICE] New message from guardian: {message}")
+    prev_mode = get_mode()
     set_mode("stop")
     time.sleep(2)
-    say_in_language(message, get_language())
-    set_mode("start")
+
+    sio.emit("reply_message", {
+        "content": "i have received your message",
+        "from": "device"
+    })
+
+    # say_in_language(f"New message {message}", get_language())
+    # say_in_language("Do you want to reply? Say yes or no after the beep.", get_language())
+    # lang = get_language()
+    # audio_path = "./data/audio_capture/confirmation.wav"
+
+    # if lang == "twi":
+    #     confirmation = record_and_transcribe(duration=3)
+    # else:
+    #     confirmation = listen_and_save(audio_path, duration=3)
+
+    # if confirmation and confirmation.strip().lower() in ["yes", "yeah", "yep", "sure"]:
+    #     say_in_language("Please say your reply after the beep.", lang)
+
+    #     reply_path = "./data/audio_capture/reply.wav"
+    #     if lang == "twi":
+    #         user_reply = record_and_transcribe(duration=8)
+    #     else:
+    #         user_reply = listen_and_save(reply_path, duration=8)
+
+    #     if user_reply and user_reply.strip():
+    #         print(f"[USER REPLY] {user_reply}")
+    #         sio.emit("reply_message", {
+    #             "content": user_reply,
+    #             "from": "device"
+    #         })
+    #         say_in_language("Your reply has been sent.", lang)
+    #     else:
+    #         say_in_language("No reply was detected.", lang)
+    # else:
+    #     say_in_language("Okay, no reply sent.", lang)
+
+    set_mode(prev_mode)

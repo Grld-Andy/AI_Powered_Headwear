@@ -15,7 +15,6 @@ from config.settings import (
     LANG_MODEL_PATH, N_MFCC, MAX_TIMESTEPS, COMMAND_CLASSES, command_labels, training_phrases
 )
 from core.tts.piper import send_text_to_tts
-from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.twi_recognition import record_and_transcribe
 
 # Audio event globals
@@ -167,7 +166,6 @@ def predict_command(audio_path, language, duration=3):
     if language == 'twi':
         print("transcribing text in twi")
         transcribed_text = record_and_transcribe(duration)
-        transcribed_text = translate_text(transcribed_text, lang="tw-en")
         print("Translated text: ", transcribed_text)
     else:
         print("transcribing text in english")

@@ -139,7 +139,7 @@ DATABASE = 'database.db'
 BASE_URL = 'http://localhost:3000'
 API_BASE_URL = "http://localhost:3000/api"
 
-current_mode = "start"
+current_mode = "stop"
 def get_mode():
     global current_mode
     return current_mode

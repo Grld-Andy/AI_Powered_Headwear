@@ -114,13 +114,17 @@ def handle_new_message(data):
     set_mode("stop")
     time.sleep(2)
 
+    say_in_language(f"New message {message}", get_language(), wait_for_completion=True)
+    
     sio.emit("reply_message", {
-        "content": "i have received your message",
-        "from": "device"
+        "deviceId": get_device_id(),
+        "content": "i have received the message",
+        "messageType": "voice"
     })
+    print('replied to message')
 
-    # say_in_language(f"New message {message}", get_language())
-    # say_in_language("Do you want to reply? Say yes or no after the beep.", get_language())
+    # say_in_language(f"New message {message}", get_language(), wait_for_completion=True)
+    # say_in_language("Do you want to reply? Say yes or no after the beep.", get_language(), wait_for_completion=True)
     # lang = get_language()
     # audio_path = "./data/audio_capture/confirmation.wav"
 
@@ -130,7 +134,7 @@ def handle_new_message(data):
     #     confirmation = listen_and_save(audio_path, duration=3)
 
     # if confirmation and confirmation.strip().lower() in ["yes", "yeah", "yep", "sure"]:
-    #     say_in_language("Please say your reply after the beep.", lang)
+    #     say_in_language("Please say your reply after the beep.", lang, wait_for_completion=True)
 
     #     reply_path = "./data/audio_capture/reply.wav"
     #     if lang == "twi":
@@ -144,10 +148,10 @@ def handle_new_message(data):
     #             "content": user_reply,
     #             "from": "device"
     #         })
-    #         say_in_language("Your reply has been sent.", lang)
+    #         say_in_language("Your reply has been sent.", lang, wait_for_completion=True)
     #     else:
-    #         say_in_language("No reply was detected.", lang)
+    #         say_in_language("No reply was detected.", lang, wait_for_completion=True)
     # else:
-    #     say_in_language("Okay, no reply sent.", lang)
+    #     say_in_language("Okay, no reply sent.", lang, wait_for_completion=True)
 
     set_mode(prev_mode)

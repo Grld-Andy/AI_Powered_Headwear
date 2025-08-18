@@ -1,3 +1,5 @@
+import base64
+import os
 import requests
 import socketio
 import threading
@@ -69,11 +71,16 @@ def handle_location_update(data):
     print("[SOCKET] Location update:", data)
 
 # Send emergency alert
-def send_emergency_alert(device_id, alert_type="fall", severity="high", latitude=None, longitude=None, message="Emergency triggered"):
+def send_emergency_alert(device_id, alert_type="fall", severity="high",
+                         latitude=None, longitude=None, message="Emergency triggered",
+                         audio_path=None):
     if not sio.connected:
-        print("[SOCKET] Not connected. Connecting now...")
         connect_socket()
-        time.sleep(1)
+
+    voice_bytes = None
+    if audio_path:
+        with open(audio_path, "rb") as f:
+            voice_bytes = base64.b64encode(f.read()).decode("utf-8")  # convert to base64 string
 
     payload = {
         "deviceId": device_id,
@@ -81,10 +88,13 @@ def send_emergency_alert(device_id, alert_type="fall", severity="high", latitude
         "severity": severity,
         "latitude": latitude,
         "longitude": longitude,
-        "message": message
+        "message": message,
+        "voiceFile": voice_bytes  # send audio as base64 string
     }
+
     sio.emit("emergency_alert", payload)
     print("[SOCKET] Emergency alert sent:", payload)
+
 
 def connect_socket():
     global TOKEN
@@ -114,52 +124,43 @@ def handle_new_message(data):
     set_mode("stop")
     time.sleep(2)
 
-    say_in_language(f"New message {message}", get_language(), wait_for_completion=True)
-    
-    sio.emit("reply_message", {
-        "deviceId": get_device_id(),
-        "content": "i have received the message",
-        "messageType": "voice"
-    })
-    print('replied to message')
+    lang = get_language()
+    say_in_language(f"New message {message}", lang, wait_for_completion=True)
+    say_in_language("Do you want to reply? Say yes or no.", lang, wait_for_completion=True)
+    audio_path = "./data/audio_capture/confirmation.wav"
 
-    # say_in_language(f"New message {message}", get_language(), wait_for_completion=True)
-    # say_in_language("Do you want to reply? Say yes or no after the beep.", get_language(), wait_for_completion=True)
-    # lang = get_language()
-    # audio_path = "./data/audio_capture/confirmation.wav"
+    if lang == "twi":
+        confirmation = record_and_transcribe(duration=3)
+    else:
+        confirmation = listen_and_save(audio_path, duration=3)
 
-    # if lang == "twi":
-    #     confirmation = record_and_transcribe(duration=3)
-    # else:
-    #     confirmation = listen_and_save(audio_path, duration=3)
+    if confirmation and confirmation.strip().lower() in ["yes", "yeah", "yep", "sure"]:
+        say_in_language("Please say your reply after the beep.", lang, wait_for_completion=True)
 
-    # if confirmation and confirmation.strip().lower() in ["yes", "yeah", "yep", "sure"]:
-    #     say_in_language("Please say your reply after the beep.", lang, wait_for_completion=True)
+        reply_path = "./data/audio_capture/reply.wav"
+        if lang == "twi":
+            user_reply = record_and_transcribe(duration=8)
+        else:
+            user_reply = listen_and_save(reply_path, duration=8)
 
-    #     reply_path = "./data/audio_capture/reply.wav"
-    #     if lang == "twi":
-    #         user_reply = record_and_transcribe(duration=8)
-    #     else:
-    #         user_reply = listen_and_save(reply_path, duration=8)
-
-    #     if user_reply and user_reply.strip():
-    #         print(f"[USER REPLY] {user_reply}")
-    #         sio.emit("reply_message", {
-    #             "content": user_reply,
-    #             "from": "device"
-    #         })
-    #         say_in_language("Your reply has been sent.", lang, wait_for_completion=True)
-    #     else:
-    #         say_in_language("No reply was detected.", lang, wait_for_completion=True)
-    # else:
-    #     say_in_language("Okay, no reply sent.", lang, wait_for_completion=True)
+        if user_reply and user_reply.strip():
+            print(f"[USER REPLY] {user_reply}")
+            sio.emit("reply_message", {
+                "content": user_reply,
+                "from": "device"
+            })
+            say_in_language("Your reply has been sent.", lang, wait_for_completion=True)
+        else:
+            say_in_language("No reply was detected.", lang, wait_for_completion=True)
+    else:
+        say_in_language("Okay, no reply sent.", lang, wait_for_completion=True)
 
     set_mode(prev_mode)
 
 
 def send_payment_to_server(amount, payee_name, payee_account):
     sio.emit("send_money", {
-        "amount": amount,
+        "amount": float(amount),
         "payeeName": payee_name,
         "payeeAccount": payee_account,
     })

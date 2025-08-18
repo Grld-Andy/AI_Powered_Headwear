@@ -14,11 +14,12 @@ from core.app.modes.emergency_mode import trigger_emergency_mode
 from core.app.modes.passive_camera_mode import handle_stop_mode
 from core.app.modes.vision_mode import handle_vision_mode, run_background_vision, stop_vision, VisionState
 from core.app.modes.reading_mode import handle_reading_mode
+from core.audio.audio_capture import listen_and_save
 from core.database.database import get_device_id
 from core.nlp.language import set_preferred_language
 from core.nlp.llm_handler import handle_chat_mode
 from core.nlp.llm_together_ai import describe_scene_with_gemini
-from core.socket.socket_client import send_emergency_alert
+from core.socket.socket_client import send_emergency_alert, send_payment_to_server
 from core.tts.piper import decrease_volume, increase_volume
 from core.tts.python_ttsx3 import speak
 from utils.say_in_language import say_in_language
@@ -90,13 +91,17 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "start"
 
     elif current_mode == "emergency_mode":
+        audio_path = "./data/audio_capture/emergency_audio.wav"
+        say_in_language("Emergency mode activated. Please describe the situation.", language, wait_for_completion=True)
+        listen_and_save(audio_path, duration=5)
         send_emergency_alert(
             device_id=get_device_id(),
             alert_type="Emergency",
             severity="critical",
-            latitude=40.7128,
-            longitude=-74.0060,
-            message=f"Fall detected at {current_time}"
+            latitude=5.304704,
+            longitude=-2.002229,
+            message=f"Fall detected at {current_time}",
+            audio_path=audio_path
         )
         return frame, "start"
 
@@ -109,7 +114,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "start"
 
     elif current_mode == "send_money":
-        handle_send_money_mode(transcribed_text, language)
+        send_payment_to_server(50, "Eno Rice", "0509895421")
+        # handle_send_money_mode(transcribed_text, language)
         return frame, "start"
 
     elif current_mode == "shutdown":

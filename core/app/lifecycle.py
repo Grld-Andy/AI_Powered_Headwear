@@ -78,7 +78,8 @@ def run_main_loop():
         ord('c'): "chat",
         ord('e'): "emergency_mode",
         ord('d'): "describe_scene",
-        ord('i'): "get_device_id"
+        ord('i'): "get_device_id",
+        ord('m'): "send_money"
     }
 
     while True:

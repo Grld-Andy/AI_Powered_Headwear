@@ -11,7 +11,7 @@ from core.socket.socket_client import start_socket_thread
 from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
-from core.audio.audio_capture import play_audio_winsound
+from core.audio.audio_capture import play_audio_pi
 from config.settings import get_mode, set_mode, get_language, set_language, pc_Ip
 from core.socket.gpio_listener import button_listener_thread
 
@@ -128,7 +128,7 @@ def initialize_app():
     global AUDIO_COMMAND_MODEL
 
     threading.Thread(target=button_listener_thread, daemon=True).start()
-    play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
+    play_audio_pi("./data/custom_audio/deviceOn1.wav", True)
     set_language(detect_or_load_language())
     SELECTED_LANGUAGE = get_language()
     print("Selected language:", SELECTED_LANGUAGE)

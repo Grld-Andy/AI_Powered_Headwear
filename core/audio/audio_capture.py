@@ -1,13 +1,13 @@
 import os
 import time
 import librosa
-import winsound
 import threading
 import numpy as np
 import sounddevice as sd
 from pydub import AudioSegment
 from scipy.io.wavfile import write
 import speech_recognition as sr
+from pydub.playback import play
 from core.nlp.intent_classifier import CommandClassifier
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -59,7 +59,7 @@ def combine_audio_files(file_list, output_path="./data/audio_capture/combined_au
         def play_and_release():
             global last_play_time
             try:
-                play_audio_winsound(output_path, wait_for_completion=True)
+                play_audio_pi(output_path, wait_for_completion=True)
                 last_play_time = time.time()
             finally:
                 audio_playing.clear()
@@ -84,14 +84,24 @@ def record_audio(path, duration=3, fs=44100):
     print(f"[Mic] Saved to {path}")
 
 
-def play_audio_winsound(filename, wait_for_completion=False):
+def play_audio_pi(filename, wait_for_completion=False):
+    """
+    Plays audio using pydub instead of winsound (for Raspberry Pi/Linux).
+    The function name is kept for compatibility with existing code.
+    """
     if not os.path.isfile(filename):
         print(f"[ERROR] File not found: {filename}")
         return
-    flags = winsound.SND_FILENAME
-    if not wait_for_completion:
-        flags |= winsound.SND_ASYNC
-    winsound.PlaySound(filename, flags)
+
+    try:
+        audio = AudioSegment.from_file(filename)
+        if wait_for_completion:
+            play(audio)
+        else:
+            # Play asynchronously in a thread
+            threading.Thread(target=play, args=(audio,)).start()
+    except Exception as e:
+        print(f"[ERROR] Could not play audio {filename}: {e}")
 
 
 def predict_audio(audio_path, model, classes, duration=2):

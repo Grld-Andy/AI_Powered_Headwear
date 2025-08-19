@@ -64,7 +64,7 @@ def find_mjpeg_host():
     net = ipaddress.ip_network(local_ip + "/24", strict=False)
     threads = []
 
-    print(f"🔍 Scanning network {net} for MJPEG Streamer on port {MJPEG_PORT}...")
+    print(f"Scanning network {net} for MJPEG Streamer on port {MJPEG_PORT}...")
 
     for ip in net.hosts():
         ip_str = str(ip)
@@ -143,7 +143,7 @@ def run_main_loop():
     global awaiting_command, wakeword_processing, transcribed_text
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
     start_socket_thread()
-    threading.Thread(target=esp32_mjpeg_stream_thread, args=(0, frame_holder), daemon=True).start()
+    threading.Thread(target=esp32_mjpeg_stream_thread, args=(frame_holder,), daemon=True).start()
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None

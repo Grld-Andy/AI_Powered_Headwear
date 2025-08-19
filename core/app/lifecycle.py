@@ -107,8 +107,6 @@ def run_main_loop():
             set_mode(new_mode)
 
             if new_mode == "voice":
-                print("Awaiting your command")
-                say_in_language("Hello, how may I help you?", get_language(), priority=1, wait_for_completion=True)
                 got_mode, transcribed_text = handle_command(get_language())
                 set_mode(got_mode)
 

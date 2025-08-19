@@ -2,7 +2,6 @@ import re
 from core.audio.audio_capture import play_audio_winsound
 from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.twi_tts import synthesize_speech
-
 import os
 
 

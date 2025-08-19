@@ -162,13 +162,10 @@ def listen_and_save(audio_path, duration, i=0):
 
 
 def predict_command(audio_path, language, duration=3):
-    print('in predict command')
     if language == 'twi':
-        print("transcribing text in twi")
         transcribed_text = record_and_transcribe(duration)
         print("Translated text: ", transcribed_text)
     else:
-        print("transcribing text in english")
         transcribed_text = listen_and_save(audio_path, duration)
 
     if transcribed_text == "":

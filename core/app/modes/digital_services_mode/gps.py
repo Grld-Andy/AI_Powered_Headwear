@@ -68,32 +68,32 @@ def calculate_distance_km(coord1: Tuple[float, float], coord2: Tuple[float, floa
 # Example Usage
 # --------------------------
 
-# Step 1: Get current location and save
-current_coords = get_current_coordinates()
-print(current_coords)
-lat, lng = current_coords['lat'], current_coords['lng']
-print("Saved Coordinates:", {"lat": lat, "lng": lng})
+# # Step 1: Get current location and save
+# current_coords = get_current_coordinates()
+# print(current_coords)
+# lat, lng = current_coords['lat'], current_coords['lng']
+# print("Saved Coordinates:", {"lat": lat, "lng": lng})
 
-# Step 2: Get readable location
-city, country = get_location_info(lat, lng)
-print(f"You are in {city}, {country}")
+# # Step 2: Get readable location
+# city, country = get_location_info(lat, lng)
+# print(f"You are in {city}, {country}")
 
-# Step 3: Simulate saved location and get directions
-saved_location = {'lat': 5.5600, 'lng': -0.2050}
-directions = get_directions((current_coords['lat'], current_coords['lng']),
-                            (saved_location['lat'], saved_location['lng']))
-print("Directions:")
-for d in directions:
-    print(d)
+# # Step 3: Simulate saved location and get directions
+# saved_location = {'lat': 5.5600, 'lng': -0.2050}
+# directions = get_directions((current_coords['lat'], current_coords['lng']),
+#                             (saved_location['lat'], saved_location['lng']))
+# print("Directions:")
+# for d in directions:
+#     print(d)
 
-# Step 4: Geocode an address
-address_coords = geocode_address("University of Mines and Technology, Ghana")
-print("UMaT Coordinates:", address_coords)
+# # Step 4: Geocode an address
+# address_coords = geocode_address("University of Mines and Technology, Ghana")
+# print("UMaT Coordinates:", address_coords)
 
-# Step 5: Reverse geocode another location
-print("Location Address:", reverse_geocode_coordinates(5.6037, -0.1870))
+# # Step 5: Reverse geocode another location
+# print("Location Address:", reverse_geocode_coordinates(5.6037, -0.1870))
 
-# Step 6: Calculate distance
-accra = (5.6037, -0.1870)
-umat = (5.3030, -1.9894)
-print(f"Distance Accra <-> UMaT: {calculate_distance_km(accra, umat):.2f} km")
+# # Step 6: Calculate distance
+# accra = (5.6037, -0.1870)
+# umat = (5.3030, -1.9894)
+# print(f"Distance Accra <-> UMaT: {calculate_distance_km(accra, umat):.2f} km")

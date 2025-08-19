@@ -55,7 +55,6 @@ def handle_describe_scene_mode(frame, language):
     os.makedirs("data", exist_ok=True)
     cv2.imwrite(image_path, frame)
     description, _ = describe_scene_with_gemini(image_path)
-    print(f"Scene description: {description}")
     say_in_language(f"Scene description: {description}. That is all.", language, wait_for_completion=True)
     return frame, "stop"
 
@@ -70,19 +69,19 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return handle_stop_vision_mode(frame)
 
     elif current_mode == "count":
-        return handle_currency_mode(frame, language), "start"
+        return handle_currency_mode(frame, language), "stop"
 
     elif current_mode == "reading":
         valid_frozen_frame = frozen_frame if frozen_frame is not None else frame
-        return handle_reading_mode(frame, language, valid_frozen_frame), "start"
+        return handle_reading_mode(frame, language, valid_frozen_frame), "stop"
 
     elif current_mode == "reset":
         set_language(set_preferred_language())
-        return frame, "start"
+        return frame, "stop"
 
     elif current_mode == "current_location":
         say_in_language(f"Your current location is {reverse_geocode_coordinates(5.304704,-2.002229)}", language, wait_for_completion=True)
-        return frame, "start"
+        return frame, "stop"
 
     elif current_mode == "chat":
         handle_chat_mode()
@@ -90,7 +89,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "time":
         get_current_time(language)
-        return frame, "start"
+        return frame, "stop"
 
     elif current_mode == "emergency_mode":
         audio_path = "./data/audio_capture/emergency_audio.wav"
@@ -105,20 +104,20 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
             message=f"Fall detected at {current_time}",
             audio_path=audio_path
         )
-        return frame, "start"
+        return frame, "stop"
 
     elif current_mode == "save_contact":
         handle_save_contact_mode(transcribed_text, language)
-        return frame, "start"
+        return frame, "stop"
 
     elif current_mode == "get_contact":
         handle_get_contact_mode(language)
-        return frame, "start"
+        return frame, "stop"
 
     elif current_mode == "send_money":
         send_payment_to_server(50, "Eno Rice", "0509895421")
         # handle_send_money_mode(transcribed_text, language)
-        return frame, "start"
+        return frame, "stop"
 
     elif current_mode == "shutdown":
         time.sleep(3)
@@ -127,16 +126,16 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "volume_up":
         increase_volume()
-        return frozen_frame, "start"
+        return frozen_frame, "stop"
 
     elif current_mode == "volume_down":
         decrease_volume()
-        return frozen_frame, "start"
+        return frozen_frame, "stop"
 
     elif current_mode == "get_device_id":
         device_id = get_device_id()
         say_in_language(f"Your device ID is {device_id}", language, wait_for_completion=True)
-        return frozen_frame, "start"
+        return frozen_frame, "stop"
 
     elif current_mode == "describe_scene":
         return handle_describe_scene_mode(frame, language)

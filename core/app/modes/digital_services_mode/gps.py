@@ -17,7 +17,8 @@ geolocator = Nominatim(user_agent="geoapi")
 # 1. Get current coordinates (stub)
 def get_current_coordinates() -> Dict[str, float]:
     g = geocoder.ip('me')
-    return {'lat': g.latlng[0], 'lng': g.latlng[1]}
+    # return {'lat': g.latlng[0], 'lng': g.latlng[1]}
+    return {'lat': 5.304704, 'lng': -2.002229}
 
 
 # 2. Reverse geocode to get city and country

@@ -126,8 +126,8 @@ def handle_new_message(data):
 
     lang = get_language()
     say_in_language(f"New message {message}", lang, wait_for_completion=True)
-    say_in_language("Do you want to reply? Say yes or no.", lang, wait_for_completion=True)
     audio_path = "./data/audio_capture/confirmation.wav"
+    say_in_language("Do you want to reply? Say yes or no.", lang, wait_for_completion=True)
 
     if lang == "twi":
         confirmation = record_and_transcribe(duration=3)
@@ -135,7 +135,7 @@ def handle_new_message(data):
         confirmation = listen_and_save(audio_path, duration=3)
 
     if confirmation and confirmation.strip().lower() in ["yes", "yeah", "yep", "sure"]:
-        say_in_language("Please say your reply after the beep.", lang, wait_for_completion=True)
+        say_in_language("Please say your reply.", lang, wait_for_completion=True)
 
         reply_path = "./data/audio_capture/reply.wav"
         if lang == "twi":

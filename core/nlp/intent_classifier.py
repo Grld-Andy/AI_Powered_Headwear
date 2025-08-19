@@ -4,10 +4,10 @@ import os
 import joblib
 from sklearn.neighbors import KNeighborsClassifier
 
-from config.settings import INTENT_CLASSIFIER_MODEL
+from config.settings import INTENT_CLASSIFIER_MODEL, pc_Ip
 
 # ----------- Configuration ------------
-OLLAMA_URL = "http://10.134.162.62:11434/api/embeddings"
+OLLAMA_URL = f"http://{pc_Ip}:11434/api/embeddings"
 MODEL_NAME = "granite-embedding:30m"
 DEFAULT_CLASS = "stop"
 

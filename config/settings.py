@@ -12,6 +12,7 @@ cached_depth_vis = None
 cached_depth_raw = None
 SELECTED_LANGUAGE = ''
 wakeword_processing = False
+pc_Ip = "10.33.6.32"
 
 def get_language():
     global SELECTED_LANGUAGE
@@ -22,7 +23,7 @@ def set_language(language):
     SELECTED_LANGUAGE = language
 
 # === Constants and Globals ===
-HOST = '10.134.162.62'
+HOST = f'{pc_Ip}'
 PORT = 1234
 FS_AUDIO = 22050
 COMMAND_SECONDS = 2
@@ -136,8 +137,8 @@ wakeword_detected = threading.Event()
 esp32_connected = threading.Event()
 awaiting_command = False
 DATABASE = 'database.db'
-BASE_URL = 'http://10.134.162.62:3000'
-API_BASE_URL = "http://10.134.162.62:3000/api"
+BASE_URL = f'http://{pc_Ip}:3000'
+API_BASE_URL = f"http://{pc_Ip}:3000/api"
 
 current_mode = "stop"
 def get_mode():
@@ -147,5 +148,3 @@ def get_mode():
 def set_mode(new_mode):
     global current_mode
     current_mode = new_mode
-
-pc_Ip = "10.33.6.32/"

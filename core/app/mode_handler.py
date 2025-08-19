@@ -1,6 +1,7 @@
 import datetime
 import threading
 import os
+from time import time
 import cv2
 from config.settings import set_language
 from core.app.modes.currency_mode import handle_currency_mode
@@ -120,6 +121,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "start"
 
     elif current_mode == "shutdown":
+        time.sleep(3)
         say_in_language("Turning off", language, wait_for_completion=True, priority=1)
         return frozen_frame, "shutdown"
 

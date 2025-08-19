@@ -69,17 +69,20 @@ def run_main_loop():
     frame_count = 0
 
     key_mode_map = {
-        ord('v'): "voice",
-        ord('r'): "reading",
         ord('o'): "start",
         ord('s'): "stop",
+        ord('r'): "reading",
         ord('l'): "reset",
-        ord('q'): "shutdown",
+        ord('g'): "current_location",
         ord('c'): "chat",
+        ord('v'): "voice",
+        ord('t'): "time",
         ord('e'): "emergency_mode",
-        ord('d'): "describe_scene",
+        ord('n'): "save_contact",
+        ord('m'): "send_money",
+        ord('q'): "shutdown",
         ord('i'): "get_device_id",
-        ord('m'): "send_money"
+        ord('d'): "describe_scene",
     }
 
     while True:

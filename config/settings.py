@@ -148,4 +148,4 @@ def set_mode(new_mode):
     global current_mode
     current_mode = new_mode
 
-pc_Ip = "10.156.184.165"
+pc_Ip = "10.33.6.32/"

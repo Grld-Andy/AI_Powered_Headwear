@@ -1,5 +1,9 @@
 import cv2
 import time
+import queue
+import socket
+import requests
+import ipaddress
 import threading
 from core.app.mode_handler import process_mode
 from tensorflow.keras.models import load_model
@@ -9,7 +13,7 @@ from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
 from config.settings import get_mode, set_mode, get_language, set_language, pc_Ip
-# from core.socket.gpio_listener import button_listener_thread
+from core.socket.gpio_listener import button_listener_thread
 
 
 # Global state variables
@@ -23,29 +27,107 @@ AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
 # ESP32 stream URL
-url = f"http://{pc_Ip}:81/stream"
+MJPEG_PORT = 8080
+url = f"http://{pc_Ip}:{MJPEG_PORT}/stream"
 frame_holder = {'frame': None}
 
 
-def esp32_mjpeg_stream_thread(url, frame_holder):
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print(f"[ESP32 Camera Thread] Failed to open stream: {url}")
-        return
+# ----------------- AUTO-DETECTION CODE -----------------
+SCAN_TIMEOUT = 0.3
+found_hosts = queue.Queue()
+
+def get_local_ip():
+    """Get the Raspberry Pi's local IP address."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+def check_host(ip):
+    """Check if MJPEG Streamer is running on this IP."""
+    url = f"http://{ip}:{MJPEG_PORT}/?action=stream"
+    try:
+        r = requests.get(url, timeout=SCAN_TIMEOUT, stream=True)
+        if r.status_code == 200:
+            found_hosts.put(ip)
+    except:
+        pass
+
+def find_mjpeg_host():
+    """Scan the local network for an MJPEG Streamer server."""
+    local_ip = get_local_ip()
+    net = ipaddress.ip_network(local_ip + "/24", strict=False)
+    threads = []
+
+    print(f"🔍 Scanning network {net} for MJPEG Streamer on port {MJPEG_PORT}...")
+
+    for ip in net.hosts():
+        ip_str = str(ip)
+        if ip_str == local_ip:
+            continue
+        t = threading.Thread(target=check_host, args=(ip_str,))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    if not found_hosts.empty():
+        return found_hosts.get()
+    return None
+# -------------------------------------------------------
+
+
+def esp32_mjpeg_stream_thread(frame_holder):
+    MJPEG_URL = None
+    cap = None
+    fail_count = 0
 
     while True:
-        ret, frame = cap.read()
-        if ret and frame is not None:
-            frame_holder['frame'] = frame
+        if MJPEG_URL is None:
+            host_ip = find_mjpeg_host()
+            if host_ip:
+                MJPEG_URL = f"http://{host_ip}:{MJPEG_PORT}/?action=stream"
+                print(f"✅ Found MJPEG Streamer: {MJPEG_URL}")
+                cap = cv2.VideoCapture(MJPEG_URL)
+                fail_count = 0
+            else:
+                time.sleep(2)
+                continue
+
+        if cap is not None and cap.isOpened():
+            ret, frame = cap.read()
+
+            if ret and frame is not None:
+                frame_holder['frame'] = frame
+                fail_count = 0
+            else:
+                fail_count += 1
+                print(f"[ESP32 Camera Thread] Failed to read frame ({fail_count}).")
+
+                # force reconnect if too many failures in a row
+                if fail_count >= 5:
+                    print("[ESP32 Camera Thread] Stream error, reconnecting...")
+                    cap.release()
+                    cap = None
+                    MJPEG_URL = None
+                    fail_count = 0
+
+            time.sleep(0.05)
         else:
-            print("[ESP32 Camera Thread] Failed to read frame. Retrying...")
-            time.sleep(0.1)
+            MJPEG_URL = None
+            time.sleep(1)
 
 
 def initialize_app():
     global AUDIO_COMMAND_MODEL
 
-    # threading.Thread(target=button_listener_thread, daemon=True).start()
+    threading.Thread(target=button_listener_thread, daemon=True).start()
     play_audio_winsound("./data/custom_audio/deviceOn1.wav", True)
     set_language(detect_or_load_language())
     SELECTED_LANGUAGE = get_language()

@@ -1,6 +1,7 @@
 from core.audio.audio_capture import listen
 from core.database.database import save_contact_to_db, get_contact_by_name, save_transaction
 import re
+from core.socket.socket_client import send_payment_to_server
 from utils.say_in_language import say_in_language
 import requests
 
@@ -116,34 +117,29 @@ def handle_send_money_mode(transcribed_text, language):
     if not amount:
         say_in_language("Sorry, I couldn't understand the amount. Please try again later.", language, wait_for_completion=True)
         return
+
     recipient_input = try_listen_with_retries("Who do you want to send the money to? You can say a name or a phone number.", language)
     if not recipient_input:
         say_in_language("Sorry, I couldn't understand the recipient. Please try again later.", language, wait_for_completion=True)
         return
+
     recipient_number_digits = re.sub(r"\D", "", recipient_input)
     if len(recipient_number_digits) == 10:
+        payee_name = "Unknown"
+        send_payment_to_server(amount, payee_name, recipient_number_digits)
+        save_transaction(payee_name, recipient_number_digits, amount)
         say_in_language(f"Sending {amount} to number {recipient_number_digits}.", language, wait_for_completion=True)
         say_in_language("The money has been sent successfully.", language, wait_for_completion=True)
-        save_transaction("Unknown", recipient_number_digits, amount)
-        save_choice = try_listen_with_retries("Would you like to save this number as a contact? Please say yes or no.", language)
-        if save_choice and save_choice.lower() in ["yes", "yeah", "yep", "sure"]:
-            contact_name = try_listen_with_retries("Please say the name for this contact.", language)
-            if contact_name:
-                existing_contact = get_contact_by_name(contact_name)
-                if existing_contact:
-                    say_in_language(f"A contact named {contact_name} already exists with number {existing_contact['number']}. The number was not saved.", language, wait_for_completion=True)
-                else:
-                    save_contact_to_db(contact_name, recipient_number_digits)
-                    say_in_language(f"Contact {contact_name} with number {recipient_number_digits} saved successfully.", language, wait_for_completion=True)
-            else:
-                say_in_language("Sorry, I could not understand the name. The number was not saved.", language, wait_for_completion=True)
         return
-    contacts = get_contact_by_name(recipient_input)
-    if not contacts:
+
+    contact = get_contact_by_name(recipient_input)
+    if not contact:
         say_in_language(f"I couldn't find any contact named {recipient_input}.", language, wait_for_completion=True)
         return
-    contact = contacts[0]
+
     recipient_number = contact['number']
+    send_payment_to_server(amount, contact['name'], recipient_number)
+    save_transaction(contact['name'], recipient_number, amount)
     say_in_language(f"Sending {amount} to {contact['name']} at number {recipient_number}.", language, wait_for_completion=True)
     say_in_language("The money has been sent successfully.", language, wait_for_completion=True)
-    save_transaction(contact['name'], recipient_number, amount)
+    

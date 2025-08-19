@@ -60,8 +60,13 @@ def handle_vision_mode(frame, language, state: VisionState, passive=False):
             continue
         x1, y1, x2, y2 = det['bbox']
         class_id = det['class_id']
+        if class_id in [4,8,10,16,17,18,19,20,21,22,23,61,78]:
+            continue
+        if class_id in [15,16,52,54,64,77]:
+            class_id = 0
         class_name = yolo_model.names[class_id]
         object_depth_roi = state.cached_depth_raw[y1:y2, x1:x2]
+        print('class detected: ', class_id, class_name)
         if object_depth_roi.size and object_depth_roi.min() < 200:
             close_objects.append(class_name)
             label = f"{class_name} {conf:.2f} - CLOSE!"

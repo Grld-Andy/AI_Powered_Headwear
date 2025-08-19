@@ -5,6 +5,9 @@ from scipy.io.wavfile import write
 from pydub import AudioSegment
 from dotenv import load_dotenv
 
+from config.settings import get_language
+from twi_stuff.eng_to_twi import translate_text
+
 load_dotenv()
 
 # Constants
@@ -13,9 +16,8 @@ ASR_URL = "https://translation-api.ghananlp.org/asr/v1/transcribe"
 
 
 def record_audio(filename="data/twi_audio.wav", duration=2, fs=44100):
-    print(f"🎙️ Recording for {duration} seconds...")
     audio = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
-    sd.wait()  # Wait until recording is finished
+    sd.wait()
     write(filename, fs, audio)
     print(f"💾 Audio saved to {filename}")
 
@@ -59,9 +61,11 @@ def transcribe_audio(file_path: str, language: str = "tw") -> str:
 def record_and_transcribe(language="tw", duration=4):
     wav_file = "audio_capture/user_command.wav"
     mp3_file = "audio_capture/twi_audio.mp3"
-    # record_audio(wav_file, duration)
+    record_audio(wav_file, duration)
     convert_wav_to_mp3(wav_file, mp3_file)
-    return transcribe_audio(mp3_file, language)
+    transcribed_text = transcribe_audio(mp3_file, language)
+    translated_text = translate_text(transcribed_text, lang="tw-en")
+    return translated_text
 
 # transcription = record_and_transcribe(language="tw", duration=2)
 # print("📝 Transcribed Text:", transcription)

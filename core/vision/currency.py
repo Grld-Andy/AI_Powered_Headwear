@@ -2,7 +2,7 @@ import requests, cv2
 from collections import Counter
 
 
-def calculate_currency(frame, save_path='data/currency.png', url='http://localhost:8000/detect/'):
+def calculate_currency(frame, save_path='data/currency.png', url='http://10.134.162.62:8000/detect/'):
     cv2.imwrite(save_path, frame)
 
     with open(save_path, 'rb') as f:

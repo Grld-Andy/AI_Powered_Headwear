@@ -15,8 +15,12 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from config.settings import (
     LANG_MODEL_PATH, N_MFCC, MAX_TIMESTEPS, COMMAND_CLASSES, command_labels, training_phrases
 )
+<<<<<<< HEAD
 from core.tts.python_ttsx3 import speak
 from twi_stuff.eng_to_twi import translate_text
+=======
+from core.tts.piper import send_text_to_tts
+>>>>>>> raspberry_pi_2
 from twi_stuff.twi_recognition import record_and_transcribe
 
 # Audio event globals
@@ -183,14 +187,10 @@ def listen_and_save(audio_path, duration, i=0):
 
 
 def predict_command(audio_path, language, duration=3):
-    print('in predict command')
     if language == 'twi':
-        print("transcribing text in twi")
         transcribed_text = record_and_transcribe(duration)
-        transcribed_text = translate_text(transcribed_text, lang="tw-en")
         print("Translated text: ", transcribed_text)
     else:
-        print("transcribing text in english")
         transcribed_text = listen_and_save(audio_path, duration)
 
     if transcribed_text == "":

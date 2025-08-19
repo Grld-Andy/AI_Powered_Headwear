@@ -13,7 +13,8 @@ from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_winsound
 from core.socket.gpio_listener import button_listener_thread
-from config.settings import get_mode, set_mode, get_language, set_language
+from config.settings import get_mode, set_mode, get_language, set_language, pc_Ip
+# from core.socket.gpio_listener import button_listener_thread
 
 
 # Global state variables
@@ -28,6 +29,8 @@ transcribed_text = None
 
 # MJPEG Streamer default port
 MJPEG_PORT = 8080
+# ESP32 stream URL
+url = f"http://{pc_Ip}:81/stream"
 frame_holder = {'frame': None}
 
 
@@ -143,7 +146,7 @@ def run_main_loop():
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
 
     start_socket_thread()
-    threading.Thread(target=esp32_mjpeg_stream_thread, args=(frame_holder,), daemon=True).start()
+    threading.Thread(target=esp32_mjpeg_stream_thread, args=(0, frame_holder), daemon=True).start()
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None
@@ -151,16 +154,20 @@ def run_main_loop():
     frame_count = 0
 
     key_mode_map = {
-        ord('v'): "voice",
-        ord('r'): "reading",
         ord('o'): "start",
         ord('s'): "stop",
+        ord('r'): "reading",
         ord('l'): "reset",
-        ord('q'): "shutdown",
+        ord('g'): "current_location",
         ord('c'): "chat",
+        ord('v'): "voice",
+        ord('t'): "time",
         ord('e'): "emergency_mode",
+        ord('n'): "save_contact",
+        ord('m'): "send_money",
+        ord('q'): "shutdown",
+        ord('i'): "get_device_id",
         ord('d'): "describe_scene",
-        ord('i'): "get_device_id"
     }
 
     while True:
@@ -185,8 +192,6 @@ def run_main_loop():
             set_mode(new_mode)
 
             if new_mode == "voice":
-                print("Awaiting your command")
-                say_in_language("Hello, how may I help you?", get_language(), priority=1, wait_for_completion=True)
                 got_mode, transcribed_text = handle_command(get_language())
                 set_mode(got_mode)
 

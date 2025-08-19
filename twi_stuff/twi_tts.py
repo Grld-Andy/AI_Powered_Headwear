@@ -46,7 +46,11 @@ def synthesize_speech(
         response = requests.post(TTS_URL, json=payload, headers=headers)
 
         if response.status_code == 200:
+            print('response content: ', response.content)
+            if 'scene_description' in output_filename:
+                output_filename = "./data/twi/scene_description.wav"
             with open(output_filename, "wb") as f:
+                # if(len(response.content) <= 30):
                 f.write(response.content)
             print(f"✅ Audio saved as {output_filename}")
             return True

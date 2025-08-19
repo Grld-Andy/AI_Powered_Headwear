@@ -24,7 +24,7 @@ pip install opencv-python librosa sounddevice pytesseract numpy Pillow ultralyti
 ```
 Tesseract OCR (ensure it's in system PATH)
 ffmpeg (required by pydub)
-A local TTS server running on http://localhost:5000
+A local TTS server running on http://10.134.162.62:5000
 
 ### External Files
 Pretrained models:
@@ -40,7 +40,7 @@ Pre-translated .wav files stored in:
 - translated/numbers/
 - translated/labels/
 
-Wake word server running on localhost:65432
+Wake word server running on 10.134.162.62:65432
 
 ## How to Run
 

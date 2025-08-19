@@ -12,6 +12,7 @@ cached_depth_vis = None
 cached_depth_raw = None
 SELECTED_LANGUAGE = ''
 wakeword_processing = False
+pc_Ip = "10.33.6.32"
 
 def get_language():
     global SELECTED_LANGUAGE
@@ -22,7 +23,7 @@ def set_language(language):
     SELECTED_LANGUAGE = language
 
 # === Constants and Globals ===
-HOST = 'localhost'
+HOST = f'{pc_Ip}'
 PORT = 1234
 FS_AUDIO = 22050
 COMMAND_SECONDS = 2
@@ -136,9 +137,14 @@ wakeword_detected = threading.Event()
 esp32_connected = threading.Event()
 awaiting_command = False
 DATABASE = 'database.db'
+<<<<<<< HEAD
 API_BASE_URL = "http://localhost:3000/api"
+=======
+BASE_URL = f'http://{pc_Ip}:3000'
+API_BASE_URL = f"http://{pc_Ip}:3000/api"
+>>>>>>> raspberry_pi_2
 
-current_mode = "start"
+current_mode = "stop"
 def get_mode():
     global current_mode
     return current_mode

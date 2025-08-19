@@ -42,7 +42,6 @@ def set_preferred_language():
             say_in_language(f"Could not understand, using {lang}", lang, wait_for_completion=True)
 
         save_language(lang)
-        say_in_language(f"your device id is: {get_device_id()}", lang, wait_for_completion=True)
         return lang
 
     except Exception as e:

@@ -5,6 +5,7 @@ import cv2
 from config.settings import set_language
 from core.app.modes.currency_mode import handle_currency_mode
 from core.app.modes.current_time_mode import get_current_time
+from core.app.modes.digital_services_mode.gps import reverse_geocode_coordinates
 from core.app.modes.digital_services_mode.mobile_network import (
     handle_save_contact_mode,
     handle_send_money_mode,
@@ -55,7 +56,7 @@ def handle_describe_scene_mode(frame, language):
     description, _ = describe_scene_with_gemini(image_path)
     print(f"Scene description: {description}")
     say_in_language(f"Scene description: {description}. That is all.", language, wait_for_completion=True)
-    return frame, "start"
+    return frame, "stop"
 
 # -------------------- Main Dispatcher -------------------- #
 
@@ -79,7 +80,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "start"
 
     elif current_mode == "current_location":
-        print('getting current location')
+        say_in_language(f"Your current location is {reverse_geocode_coordinates(5.304704,-2.002229)}", language, wait_for_completion=True)
         return frame, "start"
 
     elif current_mode == "chat":

@@ -22,7 +22,7 @@ def set_language(language):
     SELECTED_LANGUAGE = language
 
 # === Constants and Globals ===
-HOST = 'localhost'
+HOST = '10.134.162.62'
 PORT = 1234
 FS_AUDIO = 22050
 COMMAND_SECONDS = 2
@@ -136,8 +136,8 @@ wakeword_detected = threading.Event()
 esp32_connected = threading.Event()
 awaiting_command = False
 DATABASE = 'database.db'
-BASE_URL = 'http://localhost:3000'
-API_BASE_URL = "http://localhost:3000/api"
+BASE_URL = 'http://10.134.162.62:3000'
+API_BASE_URL = "http://10.134.162.62:3000/api"
 
 current_mode = "stop"
 def get_mode():

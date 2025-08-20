@@ -42,9 +42,12 @@ def _tts_worker():
             # Sanitize text (UTF-8 safe)
             clean_text = text.encode("utf-8", errors="ignore").decode("utf-8")
 
-            # Temp WAV file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as fp:
-                temp_wav = fp.name
+            # Special case: save scene_description.wav instead of temp file
+            if "scene_description" in text:
+                temp_wav = "scene_description.wav"
+            else:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as fp:
+                    temp_wav = fp.name
 
             # Delete if a stale file somehow exists
             if os.path.exists(temp_wav):
@@ -62,8 +65,8 @@ def _tts_worker():
         except Exception as e:
             print("TTS Error (background):", e)
         finally:
-            # Cleanup even on error
-            if temp_wav and os.path.exists(temp_wav):
+            # Cleanup even on error, but not scene_description.wav
+            if temp_wav and os.path.exists(temp_wav) and "scene_description" not in text:
                 try:
                     os.remove(temp_wav)
                 except Exception as cleanup_err:
@@ -84,8 +87,12 @@ def send_text_to_tts(text, wait_for_completion=False, priority=5, volume=1):
                 print("[Speaking]:", text)
                 clean_text = text.encode("utf-8", errors="ignore").decode("utf-8")
 
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as fp:
-                    temp_wav = fp.name
+                # Special case: save scene_description.wav
+                if "scene_description" in text:
+                    temp_wav = "scene_description.wav"
+                else:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as fp:
+                        temp_wav = fp.name
 
                 # Delete if a stale file somehow exists
                 if os.path.exists(temp_wav):
@@ -97,8 +104,8 @@ def send_text_to_tts(text, wait_for_completion=False, priority=5, volume=1):
                 subprocess.run(['pico2wave', '-l', 'en-US', '-w', temp_wav, clean_text], check=True)
                 subprocess.run(['aplay', temp_wav], check=True)
 
-                # Clean up
-                if os.path.exists(temp_wav):
+                # Clean up only if not scene_description.wav
+                if "scene_description" not in text and os.path.exists(temp_wav):
                     try:
                         os.remove(temp_wav)
                     except Exception as cleanup_err:

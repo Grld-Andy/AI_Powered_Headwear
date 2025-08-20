@@ -27,8 +27,8 @@ AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
 # ESP32 stream URL
-MJPEG_PORT = 8080
-url = f"http://{pc_Ip}:{MJPEG_PORT}/stream"
+MJPEG_PORT = 81
+# url = f"http://{pc_Ip}:{MJPEG_PORT}/stream"
 frame_holder = {'frame': None}
 
 
@@ -50,7 +50,7 @@ def get_local_ip():
 
 def check_host(ip):
     """Check if MJPEG Streamer is running on this IP."""
-    url = f"http://{ip}:{MJPEG_PORT}/?action=stream"
+    url = f"http://{ip}:81/stream"
     try:
         r = requests.get(url, timeout=SCAN_TIMEOUT, stream=True)
         if r.status_code == 200:
@@ -61,7 +61,7 @@ def check_host(ip):
 def find_mjpeg_host():
     """Scan the local network for an MJPEG Streamer server."""
     local_ip = get_local_ip()
-    net = ipaddress.ip_network(local_ip + "/24", strict=False)
+    net = ipaddress.ip_network(local_ip + "/81", strict=False)
     threads = []
 
     print(f"Scanning network {net} for MJPEG Streamer on port {MJPEG_PORT}...")
@@ -92,7 +92,7 @@ def esp32_mjpeg_stream_thread(frame_holder):
         if MJPEG_URL is None:
             host_ip = find_mjpeg_host()
             if host_ip:
-                MJPEG_URL = f"http://{host_ip}:{MJPEG_PORT}/?action=stream"
+                MJPEG_URL = f"http://{host_ip}:{MJPEG_PORT}/stream"
                 print(f"✅ Found MJPEG Streamer: {MJPEG_URL}")
                 cap = cv2.VideoCapture(MJPEG_URL)
                 fail_count = 0

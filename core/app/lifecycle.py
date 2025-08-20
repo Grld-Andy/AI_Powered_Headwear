@@ -61,7 +61,7 @@ def run_main_loop():
     global awaiting_command, wakeword_processing, transcribed_text
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
     start_socket_thread()
-    threading.Thread(target=esp32_mjpeg_stream_thread, args=(0, frame_holder), daemon=True).start()
+    threading.Thread(target=esp32_mjpeg_stream_thread, args=('http://10.134.162.165/stream', frame_holder), daemon=True).start()
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None

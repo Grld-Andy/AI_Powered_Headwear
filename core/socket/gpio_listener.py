@@ -3,7 +3,7 @@ import threading
 from gpiozero import Button
 from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
-from config.settings import set_mode, get_language
+from config.settings import get_mode, set_mode, get_language
 
 BUTTON_PINS = {
     "voice": 17,
@@ -24,7 +24,7 @@ def button_listener_thread():
     print("[GPIO Listener] Button listener started. Waiting for presses...")
 
     while True:
-        if buttons["voice"].is_pressed:
+        if buttons["voice"].is_pressed and get_mode() != "voice":
             print("[BUTTON] Voice mode")
             set_mode("voice")
             say_in_language("Hello, how may I help you?", get_language(),
@@ -32,15 +32,15 @@ def button_listener_thread():
             got_mode, _ = handle_command(get_language())
             set_mode(got_mode)
 
-        elif buttons["start"].is_pressed:
+        elif buttons["start"].is_pressed and get_mode() != "start":
             print("[BUTTON] Start mode")
             set_mode("start")
 
-        elif buttons["stop"].is_pressed:
+        elif buttons["stop"].is_pressed and get_mode() != "stop":
             print("[BUTTON] Stop mode")
             set_mode("stop")
 
-        elif buttons["reading"].is_pressed:
+        elif buttons["reading"].is_pressed and get_mode() != "reading":
             print("[BUTTON] Reading mode")
             set_mode("reading")
 

@@ -1,11 +1,11 @@
 import os
 import time
-import wave
 import librosa
 import threading
 import numpy as np
 import sounddevice as sd
 from pydub import AudioSegment
+from scipy.io.wavfile import write
 from pydub.playback import play
 from core.nlp.intent_classifier import CommandClassifier
 from tensorflow.keras.models import load_model
@@ -17,6 +17,7 @@ from core.tts.piper import send_text_to_tts
 from twi_stuff.twi_recognition import record_and_transcribe
 import speech_recognition as sr
 
+
 # Audio event globals
 tts_lock = threading.Lock()
 audio_playing = threading.Event()
@@ -25,27 +26,10 @@ last_play_time = 0
 # Models — loaded once
 LANG_MODEL = load_model(LANG_MODEL_PATH)
 
-# Default INMP441 params
+# Default INMP441 params (your device is hw:1,0 → index 1)
 DEFAULT_FS = 16000
-DEFAULT_DEVICE = None  # set to "hw:1,0" or device index after checking sd.query_devices()
-
-
-def _record_and_save_wav(path, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE, channels=1):
-    """
-    Record from INMP441 mic and save as WAV using wave module.
-    """
-    print(f"[INMP441] Recording {duration}s at {fs}Hz...")
-    try:
-        audio = sd.rec(int(duration * fs), samplerate=fs, channels=channels, dtype='int16', device=device)
-        sd.wait()
-        with wave.open(path, 'wb') as wf:
-            wf.setnchannels(channels)
-            wf.setsampwidth(2)  # 16-bit PCM
-            wf.setframerate(fs)
-            wf.writeframes(audio.tobytes())
-        print(f"[INMP441] Saved to {path}")
-    except Exception as e:
-        print(f"[ERROR] Recording failed: {e}")
+DEFAULT_DEVICE = 1   # use INMP441 mic
+DEFAULT_CHANNELS = 1  # force mono
 
 
 def listen(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, i=0):
@@ -54,6 +38,10 @@ def listen(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, i=0):
 
 def combine_audio_files(file_list, output_path="./data/audio_capture/combined_audio.wav",
                         wait_for_completion=False, priority=0):
+    """
+    Combine multiple WAV/MP3 files into one and play it back.
+    Handles lock/release safely.
+    """
     global last_play_time
 
     if priority == 0 and audio_playing.is_set():
@@ -72,7 +60,7 @@ def combine_audio_files(file_list, output_path="./data/audio_capture/combined_au
             if not os.path.isfile(file):
                 continue
             try:
-                audio = AudioSegment.from_file(file)
+                audio = AudioSegment.from_file(file).set_channels(1)  # force mono
                 combined += audio
             except Exception as e:
                 print("Exception reading file:", file, e)
@@ -99,12 +87,27 @@ def combine_audio_files(file_list, output_path="./data/audio_capture/combined_au
     except Exception as e:
         print("Exception during audio combination or playback:", e)
         audio_playing.clear()
-        tts_lock.release()
+        if tts_lock.locked():
+            tts_lock.release()
 
 
-def record_audio(path, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
-    """Record audio and save as WAV (INMP441 mic)."""
-    _record_and_save_wav(path, duration, fs, device)
+def record_audio(path=None, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
+    """Record from INMP441 (I2S) and save as WAV with timestamp fallback."""
+    if path is None:
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        path = f"./data/audio_capture/recording_{timestamp}.wav"
+
+    print(f"[INMP441] Recording {duration}s at {fs}Hz...")
+    try:
+        audio = sd.rec(int(duration * fs), samplerate=fs, channels=DEFAULT_CHANNELS,
+                       dtype='int16', device=device)
+        sd.wait()
+        write(path, fs, audio)
+        print(f"[INMP441] Saved to {path}")
+        return path
+    except Exception as e:
+        print(f"[ERROR] Recording failed: {e}")
+        return None
 
 
 def play_audio_pi(filename, wait_for_completion=False):
@@ -124,10 +127,13 @@ def play_audio_pi(filename, wait_for_completion=False):
 
 
 def predict_audio(audio_path, model, classes, duration=2, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
-    """Record audio, extract MFCCs, run prediction."""
+    """Record from INMP441, extract MFCCs, run prediction."""
     print(f"[INMP441] Recording {duration}s for prediction...")
     try:
-        _record_and_save_wav(audio_path, duration, fs, device)
+        myrecording = sd.rec(int(duration * fs), samplerate=fs, channels=DEFAULT_CHANNELS,
+                             dtype='int16', device=device)
+        sd.wait()
+        write(audio_path, fs, myrecording)
 
         audio, sample_rate = librosa.load(audio_path, sr=None)
         mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=N_MFCC)
@@ -145,13 +151,17 @@ def predict_audio(audio_path, model, classes, duration=2, fs=DEFAULT_FS, device=
 
 def listen_and_save(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, i=0):
     """
-    Record with INMP441, then transcribe using Google Speech Recognition.
-    Retries up to 3 times if unclear.
+    Record with INMP441 instead of sr.Microphone,
+    then transcribe using Google Speech Recognition.
+    Retries up to 3 times if speech not understood.
     """
     recognizer = sr.Recognizer()
     try:
         print(f"🎤 Recording from INMP441 (attempt {i+1}) for {duration}s...")
-        _record_and_save_wav(audio_path, duration, fs, device)
+        audio = sd.rec(int(duration * fs), samplerate=fs, channels=DEFAULT_CHANNELS,
+                       dtype='int16', device=device)
+        sd.wait()
+        write(audio_path, fs, audio)
 
         with sr.AudioFile(audio_path) as source:
             audio_data = recognizer.record(source)
@@ -162,22 +172,20 @@ def listen_and_save(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, 
         return transcribed_text
 
     except sr.UnknownValueError:
-        print("Could not understand audio.")
+        print("❓ Could not understand audio.")
         if i < 2:
-            send_text_to_tts("I didn't get that. Could you please try again?", wait_for_completion=True, priority=1)
-            return listen_and_save(audio_path, duration, fs=fs, device=device, i=i + 1)
+            send_text_to_tts("I didn't get that. Could you please try again?",
+                             wait_for_completion=True, priority=1)
+            return listen_and_save(audio_path, duration, fs=fs, device=device, i=i+1)
         else:
-            send_text_to_tts("Sorry, I'm still having trouble understanding you.", wait_for_completion=True, priority=1)
+            send_text_to_tts("Sorry, I'm still having trouble understanding you.",
+                             wait_for_completion=True, priority=1)
             return ""
-
-    except sr.RequestError as e:
-        print(f"Google request failed: {e}")
-        send_text_to_tts("Please check your network connection and try again.", wait_for_completion=True, priority=1)
-        return ""
 
     except Exception as e:
         print(f"[ERROR] Mic error: {e}")
-        send_text_to_tts("No microphone was found or it isn't working.", wait_for_completion=True, priority=1)
+        send_text_to_tts("No microphone was found or it isn't working.",
+                         wait_for_completion=True, priority=1)
         return ""
 
 
@@ -191,7 +199,7 @@ def predict_command(audio_path, language, duration=3, fs=DEFAULT_FS, device=DEFA
     if transcribed_text == "":
         return "background", transcribed_text
 
-    print(f"this is what you said {transcribed_text}")
+    print(f"this is what you said: {transcribed_text}")
     classifier = CommandClassifier(training_phrases, command_labels)
     predicted_label = classifier.classify(transcribed_text)
     print(f"🔮 Predicted Class: {predicted_label}")

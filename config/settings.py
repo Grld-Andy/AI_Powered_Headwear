@@ -12,7 +12,7 @@ cached_depth_vis = None
 cached_depth_raw = None
 SELECTED_LANGUAGE = ''
 wakeword_processing = False
-pc_Ip = "10.134.162.67"
+pc_Ip = "172.20.10.3"
 
 def get_language():
     global SELECTED_LANGUAGE
@@ -129,8 +129,10 @@ INTENT_CLASSIFIER_MODEL = "./models/knn_classifier.joblib"
 # # Load models
 # LANG_MODEL = load_model(LANG_MODEL_PATH)
 # yolo_model = YOLO("./models/yolov5n.pt")
-
-cap = cv2.VideoCapture(0)
+CAMERA_IP = "192.168.137.3"
+MJPEG_PORT = 81
+MJPEG_URL = f"http://{CAMERA_IP}:{MJPEG_PORT}/stream"
+cap = cv2.VideoCapture(MJPEG_URL)
 
 # State variables
 wakeword_detected = threading.Event()

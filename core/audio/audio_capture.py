@@ -34,6 +34,8 @@ LANG_MODEL = load_model(LANG_MODEL_PATH)
 DEFAULT_FS = 16000
 DEFAULT_DEVICE = None  # set to "hw:1,0" or device index after checking sd.query_devices()
 
+def listen(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, i=0):
+    return listen_and_save(audio_path, duration, fs, device, i)
 
 def combine_audio_files(file_list, output_path="./data/audio_capture/combined_audio.wav",
                         wait_for_completion=False, priority=0):

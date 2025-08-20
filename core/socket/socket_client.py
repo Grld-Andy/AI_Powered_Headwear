@@ -152,7 +152,7 @@ def handle_new_message(data):
             print(f"[USER REPLY] {user_reply}")
             sio.emit("reply_message", {
                 "content": user_reply,
-                "type": "message",
+                "messageType": "message",
                 "deviceId": get_device_id()
             })
             say_in_language("Your reply has been sent.", lang, wait_for_completion=True)

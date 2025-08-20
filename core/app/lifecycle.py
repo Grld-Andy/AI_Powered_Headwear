@@ -8,7 +8,7 @@ from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
 from core.nlp.language import detect_or_load_language
 from core.audio.audio_capture import play_audio_pi
-from config.settings import get_mode, set_mode, get_language, set_language
+from config.settings import CAMERA_IP, MJPEG_PORT, get_mode, set_mode, get_language, set_language
 from core.socket.gpio_listener import button_listener_thread
 
 
@@ -23,8 +23,6 @@ AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
 # ESP32 stream URL (known IP)
-CAMERA_IP = "10.134.162.165"
-MJPEG_PORT = 81
 MJPEG_URL = f"http://{CAMERA_IP}:{MJPEG_PORT}/stream"
 
 frame_holder = {'frame': None}

@@ -17,6 +17,7 @@ from core.tts.piper import send_text_to_tts
 from twi_stuff.twi_recognition import record_and_transcribe
 import speech_recognition as sr
 
+
 # import sounddevice as sd
 # print(sd.query_devices())
 

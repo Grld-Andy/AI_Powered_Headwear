@@ -23,12 +23,12 @@ AUDIO_COMMAND_MODEL = None
 transcribed_text = None
 
 # ESP32 stream URL
-url = f"http://{pc_Ip}:81/stream"
+url = f"http://192.168.137.49:81/stream"
 frame_holder = {'frame': None}
 
 
 def esp32_mjpeg_stream_thread(url, frame_holder):
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(url)
     if not cap.isOpened():
         print(f"[ESP32 Camera Thread] Failed to open stream: {url}")
         return
@@ -61,7 +61,7 @@ def run_main_loop():
     global awaiting_command, wakeword_processing, transcribed_text
     global last_frame_time, last_depth_time, cached_depth_vis, cached_depth_raw
     start_socket_thread()
-    threading.Thread(target=esp32_mjpeg_stream_thread, args=('http://10.134.162.165/stream', frame_holder), daemon=True).start()
+    threading.Thread(target=esp32_mjpeg_stream_thread, args=(url, frame_holder), daemon=True).start()
 
     cv2.namedWindow("Camera View", cv2.WINDOW_NORMAL)
     frozen_frame = None

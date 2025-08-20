@@ -2,6 +2,7 @@ import sounddevice as sd
 import numpy as np
 import wave
 
+
 def record_audio(filename="output.wav", duration=5, samplerate=16000, channels=1):
     """
     Record audio from INMP441 I2S microphone and save as WAV.

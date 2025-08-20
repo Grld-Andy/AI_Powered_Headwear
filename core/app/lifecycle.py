@@ -84,7 +84,7 @@ def find_mjpeg_host():
 
 
 def esp32_mjpeg_stream_thread(frame_holder):
-    MJPEG_URL = None
+    MJPEG_URL = 'http://10.134.162.165/'
     cap = None
     fail_count = 0
 

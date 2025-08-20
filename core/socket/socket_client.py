@@ -116,6 +116,11 @@ def send_message(device_id, content, message_type="text"):
     sio.emit("send_message", payload)
     print("[SOCKET] Message sent:", payload)
 
+def is_confirmation(confirmation: str) -> bool:
+    words = confirmation.lower().strip().split()
+    yes_words = ["yes", "yeah", "yep", "sure"]
+    return any(word in yes_words for word in words)
+
 @sio.on("new_message")
 def handle_new_message(data):
     message = data['content']
@@ -134,7 +139,7 @@ def handle_new_message(data):
     else:
         confirmation = listen_and_save(audio_path, duration=3)
 
-    if confirmation and confirmation.strip().lower() in ["yes", "yeah", "yep", "sure"]:
+    if is_confirmation(confirmation):
         say_in_language("Please say your reply.", lang, wait_for_completion=True)
 
         reply_path = "./data/audio_capture/reply.wav"

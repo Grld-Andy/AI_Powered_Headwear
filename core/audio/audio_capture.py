@@ -113,20 +113,25 @@ def record_audio(path=None, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
         return None
 
 
+audio_lock = threading.Lock()
 def play_audio_pi(filename, wait_for_completion=False):
-    """Play audio using pydub (works on Raspberry Pi/Linux)."""
+    """Play audio on Raspberry Pi without overlapping."""
     if not os.path.isfile(filename):
         print(f"[ERROR] File not found: {filename}")
         return
 
-    try:
-        audio = AudioSegment.from_file(filename)
-        if wait_for_completion:
-            play(audio)
-        else:
-            threading.Thread(target=play, args=(audio,)).start()
-    except Exception as e:
-        print(f"[ERROR] Could not play audio {filename}: {e}")
+    def _play():
+        try:
+            audio = AudioSegment.from_file(filename)
+            with audio_lock:  # Wait here if another audio is playing
+                play(audio)
+        except Exception as e:
+            print(f"[ERROR] Could not play audio {filename}: {e}")
+
+    if wait_for_completion:
+        _play()  # blocking
+    else:
+        threading.Thread(target=_play, daemon=True).start()
 
 
 def predict_audio(audio_path, model, classes, duration=2, fs=DEFAULT_FS, device=DEFAULT_DEVICE):

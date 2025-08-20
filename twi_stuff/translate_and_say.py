@@ -12,7 +12,7 @@ def translate_and_play(text, wait_for_completion=False):
         safe_filename = f"data/twi/scene_description.wav"
     print("Translating and playing:", text)
 
-    if os.path.exists(safe_filename):
+    if os.path.exists(safe_filename) and not 'scene_description' in text:
         print('file exists for text: ', text)
         play_audio_pi(safe_filename, wait_for_completion)
     else:

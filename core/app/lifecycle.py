@@ -84,7 +84,7 @@ def find_mjpeg_host():
 
 
 def esp32_mjpeg_stream_thread(frame_holder):
-    MJPEG_URL = 'http://10.134.162.165/'
+    MJPEG_URL = 'http://10.134.162.165:81/'
     cap = None
     fail_count = 0
 
@@ -94,11 +94,11 @@ def esp32_mjpeg_stream_thread(frame_holder):
             if host_ip:
                 MJPEG_URL = f"http://{host_ip}:{MJPEG_PORT}/stream"
                 print(f"✅ Found MJPEG Streamer: {MJPEG_URL}")
-                cap = cv2.VideoCapture(MJPEG_URL)
                 fail_count = 0
             else:
                 time.sleep(2)
                 continue
+        cap = cv2.VideoCapture(MJPEG_URL)
 
         if cap is not None and cap.isOpened():
             ret, frame = cap.read()

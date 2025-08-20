@@ -62,6 +62,11 @@ def esp32_mjpeg_stream_thread(frame_holder):
         time.sleep(0.05)
 
 
+def rotate_frame_90_right(frame):
+    """Rotate image 90 degrees clockwise."""
+    return cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+
+
 def initialize_app():
     """Run initialization tasks: GPIO listener, audio, language, and model load."""
     global AUDIO_COMMAND_MODEL
@@ -122,6 +127,14 @@ def run_main_loop():
         frame_count += 1
         if frame_count % frame_skip != 0:
             continue
+
+        # --- Rotate frame before showing ---
+        frame = rotate_frame_90_right(frame)
+
+        # --- If you want to use the original setup without rotation, just comment out above line ---
+        # cv2.imshow("Camera View", frame)   # original
+        # --- and uncomment this line below ---
+        # cv2.imshow("Camera View", frame)
 
         # Show frame
         cv2.imshow("Camera View", frame)

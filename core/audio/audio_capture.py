@@ -1,11 +1,11 @@
 import os
 import time
+import wave
 import librosa
 import threading
 import numpy as np
 import sounddevice as sd
 from pydub import AudioSegment
-from scipy.io.wavfile import write
 from pydub.playback import play
 from core.nlp.intent_classifier import CommandClassifier
 from tensorflow.keras.models import load_model
@@ -16,11 +16,6 @@ from config.settings import (
 from core.tts.piper import send_text_to_tts
 from twi_stuff.twi_recognition import record_and_transcribe
 import speech_recognition as sr
-
-
-# import sounddevice as sd
-# print(sd.query_devices())
-
 
 # Audio event globals
 tts_lock = threading.Lock()
@@ -34,8 +29,28 @@ LANG_MODEL = load_model(LANG_MODEL_PATH)
 DEFAULT_FS = 16000
 DEFAULT_DEVICE = None  # set to "hw:1,0" or device index after checking sd.query_devices()
 
+
+def _record_and_save_wav(path, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE, channels=1):
+    """
+    Record from INMP441 mic and save as WAV using wave module.
+    """
+    print(f"[INMP441] Recording {duration}s at {fs}Hz...")
+    try:
+        audio = sd.rec(int(duration * fs), samplerate=fs, channels=channels, dtype='int16', device=device)
+        sd.wait()
+        with wave.open(path, 'wb') as wf:
+            wf.setnchannels(channels)
+            wf.setsampwidth(2)  # 16-bit PCM
+            wf.setframerate(fs)
+            wf.writeframes(audio.tobytes())
+        print(f"[INMP441] Saved to {path}")
+    except Exception as e:
+        print(f"[ERROR] Recording failed: {e}")
+
+
 def listen(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, i=0):
     return listen_and_save(audio_path, duration, fs, device, i)
+
 
 def combine_audio_files(file_list, output_path="./data/audio_capture/combined_audio.wav",
                         wait_for_completion=False, priority=0):
@@ -88,16 +103,8 @@ def combine_audio_files(file_list, output_path="./data/audio_capture/combined_au
 
 
 def record_audio(path, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
-    """Record from INMP441 (I2S) and save as WAV"""
-    print(f"[INMP441] Recording {duration}s at {fs}Hz...")
-    try:
-        audio = sd.rec(int(duration * fs), samplerate=fs, channels=1,
-                       dtype='int16', device=device)
-        sd.wait()
-        write(path, fs, audio)
-        print(f"[INMP441] Saved to {path}")
-    except Exception as e:
-        print(f"[ERROR] Recording failed: {e}")
+    """Record audio and save as WAV (INMP441 mic)."""
+    _record_and_save_wav(path, duration, fs, device)
 
 
 def play_audio_pi(filename, wait_for_completion=False):
@@ -117,13 +124,10 @@ def play_audio_pi(filename, wait_for_completion=False):
 
 
 def predict_audio(audio_path, model, classes, duration=2, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
-    """Record from INMP441, extract MFCCs, run prediction."""
+    """Record audio, extract MFCCs, run prediction."""
     print(f"[INMP441] Recording {duration}s for prediction...")
     try:
-        myrecording = sd.rec(int(duration * fs), samplerate=fs, channels=1,
-                             dtype='int16', device=device)
-        sd.wait()
-        write(audio_path, fs, myrecording)
+        _record_and_save_wav(audio_path, duration, fs, device)
 
         audio, sample_rate = librosa.load(audio_path, sr=None)
         mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=N_MFCC)
@@ -141,19 +145,14 @@ def predict_audio(audio_path, model, classes, duration=2, fs=DEFAULT_FS, device=
 
 def listen_and_save(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, i=0):
     """
-    Record with INMP441 instead of sr.Microphone,
-    then transcribe using Google Speech Recognition.
+    Record with INMP441, then transcribe using Google Speech Recognition.
+    Retries up to 3 times if unclear.
     """
     recognizer = sr.Recognizer()
     try:
-        # record with sounddevice
         print(f"🎤 Recording from INMP441 (attempt {i+1}) for {duration}s...")
-        audio = sd.rec(int(duration * fs), samplerate=fs, channels=1,
-                       dtype='int16', device=device)
-        sd.wait()
-        write(audio_path, fs, audio)
+        _record_and_save_wav(audio_path, duration, fs, device)
 
-        # load and send to recognizer
         with sr.AudioFile(audio_path) as source:
             audio_data = recognizer.record(source)
 

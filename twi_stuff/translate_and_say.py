@@ -13,10 +13,10 @@ def translate_and_play(text, wait_for_completion=False):
     print("Translating and playing:", text)
 
     if os.path.exists(safe_filename):
-        print('file exists')
+        print('file exists for text: ', text)
         play_audio_pi(safe_filename, wait_for_completion)
     else:
-        print('file does not exist, translating and synthesizing')
+        print('file does not exist for text: ', text)
         translated = translate_text(text, "en-tw")
         success = synthesize_speech(translated, output_filename=safe_filename)
         if success:

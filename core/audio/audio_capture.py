@@ -26,10 +26,10 @@ last_play_time = 0
 # Models — loaded once
 LANG_MODEL = load_model(LANG_MODEL_PATH)
 
-# Default INMP441 params (your device is hw:1,0 → index 1)
-DEFAULT_FS = 16000
-DEFAULT_DEVICE = 1   # use INMP441 mic
-DEFAULT_CHANNELS = 1  # force mono
+# Default INMP441 params
+DEFAULT_FS = 16000         # keep ML pipeline sample rate
+DEFAULT_DEVICE = None      # let sounddevice choose default ALSA/Pulse device
+DEFAULT_CHANNELS = 1       # mono
 
 
 def listen(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, i=0):
@@ -99,8 +99,11 @@ def record_audio(path=None, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
 
     print(f"[INMP441] Recording {duration}s at {fs}Hz...")
     try:
-        audio = sd.rec(int(duration * fs), samplerate=fs, channels=DEFAULT_CHANNELS,
-                       dtype='int16', device=device)
+        audio = sd.rec(int(duration * fs),
+                       samplerate=fs,
+                       channels=DEFAULT_CHANNELS,
+                       dtype='int16',
+                       device=device if device is not None else None)
         sd.wait()
         write(path, fs, audio)
         print(f"[INMP441] Saved to {path}")
@@ -130,8 +133,11 @@ def predict_audio(audio_path, model, classes, duration=2, fs=DEFAULT_FS, device=
     """Record from INMP441, extract MFCCs, run prediction."""
     print(f"[INMP441] Recording {duration}s for prediction...")
     try:
-        myrecording = sd.rec(int(duration * fs), samplerate=fs, channels=DEFAULT_CHANNELS,
-                             dtype='int16', device=device)
+        myrecording = sd.rec(int(duration * fs),
+                             samplerate=fs,
+                             channels=DEFAULT_CHANNELS,
+                             dtype='int16',
+                             device=device if device is not None else None)
         sd.wait()
         write(audio_path, fs, myrecording)
 
@@ -158,8 +164,11 @@ def listen_and_save(audio_path, duration, fs=DEFAULT_FS, device=DEFAULT_DEVICE, 
     recognizer = sr.Recognizer()
     try:
         print(f"🎤 Recording from INMP441 (attempt {i+1}) for {duration}s...")
-        audio = sd.rec(int(duration * fs), samplerate=fs, channels=DEFAULT_CHANNELS,
-                       dtype='int16', device=device)
+        audio = sd.rec(int(duration * fs),
+                       samplerate=fs,
+                       channels=DEFAULT_CHANNELS,
+                       dtype='int16',
+                       device=device if device is not None else None)
         sd.wait()
         write(audio_path, fs, audio)
 

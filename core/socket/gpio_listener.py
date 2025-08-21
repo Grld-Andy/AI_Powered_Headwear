@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 import threading
 import wave
-
+import pyaudio
 from config.settings import set_mode, get_mode, get_language
 from utils.say_in_language import say_in_language
 from core.app.command_handler import handle_command
@@ -32,8 +32,6 @@ def handle_mode_switch(mode):
 
 
 def record_and_transcribe():
-    import pyaudio
-
     try:
         sample_rate = 16000
         channels = 1

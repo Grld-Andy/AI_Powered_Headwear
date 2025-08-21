@@ -1,7 +1,7 @@
 import httpx
 import speech_recognition as sr
 
-from config.settings import SELECTED_LANGUAGE, pc_Ip
+from config.settings import SELECTED_LANGUAGE, pc_Ip, set_mode
 from core.nlp.llm_together_ai import chat_with_gemini
 from core.tts.piper import send_text_to_tts
 from twi_stuff.eng_to_twi import translate_text
@@ -58,7 +58,12 @@ def handle_chat_mode(duration: int = 2) -> str:
     try:
         transcribed_text = recognizer.recognize_google(audio)
         print(f"🗣️ User said: {transcribed_text}")
+        # if exit or close in user input return
+        if "exit" in transcribed_text.lower() or "close" in transcribed_text.lower():
+            set_mode("stop")
+            return "Goodbye!"
         response = chat_with_gemini(transcribed_text)
+        print(response)
 
         if SELECTED_LANGUAGE == 'twi':
             translated_text = translate_text(transcribed_text, "en-tw")

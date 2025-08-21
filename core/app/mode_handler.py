@@ -115,8 +115,8 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "stop"
 
     elif current_mode == "send_money":
-        send_payment_to_server(50, "Eno Rice", "0509895421")
-        # handle_send_money_mode(transcribed_text, language)
+        # send_payment_to_server(50, "Eno Rice", "0509895421")
+        handle_send_money_mode(transcribed_text, language)
         return frame, "stop"
 
     elif current_mode == "shutdown":

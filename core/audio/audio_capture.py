@@ -85,6 +85,8 @@ def record_audio(path, duration=3, fs=44100):
 
 
 def play_audio_winsound(filename, wait_for_completion=False):
+    if 'scene_description' in filename:
+        filename = './data/twi/scene_description.wav'
     if not os.path.isfile(filename):
         print(f"[ERROR] File not found: {filename}")
         return

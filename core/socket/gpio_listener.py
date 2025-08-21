@@ -8,7 +8,7 @@ from config.settings import get_mode, set_mode, get_language
 BUTTON_PINS = {
     "voice": 17,
     "start": 27,
-    "emergency": 22,
+    "emergency_mode": 22,
     "reading": 23
 }
 
@@ -27,8 +27,6 @@ def button_listener_thread():
         if buttons["voice"].is_pressed and get_mode() != "voice":
             print("[BUTTON] Voice mode")
             set_mode("voice")
-            say_in_language("Hello, how may I help you?", get_language(),
-                            priority=1, wait_for_completion=True)
             got_mode, _ = handle_command(get_language())
             set_mode(got_mode)
 
@@ -36,9 +34,9 @@ def button_listener_thread():
             print("[BUTTON] Start mode")
             set_mode("start")
 
-        elif buttons["emergency"].is_pressed and get_mode() != "emergency":
+        elif buttons["emergency_mode"].is_pressed and get_mode() != "emergency_mode":
             print("[BUTTON] Emergency mode")
-            set_mode("emergency")
+            set_mode("emergency_mode")
 
         elif buttons["reading"].is_pressed and get_mode() != "reading":
             print("[BUTTON] Reading mode")

@@ -54,7 +54,7 @@ def handle_describe_scene_mode(frame, language):
     image_path = os.path.join("data", "captured_image.png")
     os.makedirs("data", exist_ok=True)
     cv2.imwrite(image_path, frame)
-    description, _ = describe_scene_with_gemini(image_path)
+    description = describe_scene_with_gemini(image_path)
     say_in_language(f"Scene description: {description}. That is all.", language, wait_for_completion=True)
     return frame, "stop"
 

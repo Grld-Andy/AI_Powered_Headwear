@@ -42,5 +42,5 @@ def translate_text(text: str, lang: str = "en-tw") -> str:
 
 
 # # Example usage
-# translated = translate_text("Good morning", "en-tw")
-# print("Translated:", translated)
+translated = translate_text("Good morning", "en-tw")
+print("Translated:", translated)

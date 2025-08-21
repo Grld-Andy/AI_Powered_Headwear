@@ -38,7 +38,7 @@ def set_preferred_language():
         if lang in ('english', 'twi'):
             say_in_language(f"You said {lang}", lang, wait_for_completion=True)
         else:
-            lang = 'english'
+            lang = 'twi'
             say_in_language(f"Could not understand, using {lang}", lang, wait_for_completion=True)
 
         save_language(lang)

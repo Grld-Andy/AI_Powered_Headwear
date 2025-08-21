@@ -149,11 +149,6 @@ def listen_and_save(audio_path, duration, i=0):
             send_text_to_tts("Sorry, I'm still having trouble understanding you.", wait_for_completion=True, priority=1)
             return ""
 
-    except sr.RequestError as e:
-        print(f"Google request failed: {e}")
-        send_text_to_tts("Please check your network connection and try again.", wait_for_completion=True, priority=1)
-        return ""
-
     except OSError as e:
         print(f"Microphone error: {e}")
         send_text_to_tts("No microphone was found or it isn't working.", wait_for_completion=True, priority=1)

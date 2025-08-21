@@ -37,8 +37,6 @@ english_training_phrases = [
     "stop everything", "pause the system", "turn off the assistant", "halt all processes",
     # start
     "start detecting objects", "what's in front of me", "what's near me", "look around", "identify the things around",
-    # count
-    "how much money is here", "count the cash", "what amount do I have", "tell me how much this is",
     # reset
     "change language", "reset the system", "start setup again", "switch to another language",
     # current_location
@@ -76,8 +74,6 @@ command_labels = [
     "stop", "stop", "stop", "stop",
     # start
     "start", "start", "start", "start", "start",
-    # count
-    "count", "count", "count", "count",
     # reset
     "reset", "reset", "reset", "reset",
     # current location

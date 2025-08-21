@@ -8,7 +8,7 @@ from config.settings import get_mode, set_mode, get_language
 BUTTON_PINS = {
     "voice": 17,
     "start": 27,
-    "stop": 22,
+    "emergency": 22,
     "reading": 23
 }
 

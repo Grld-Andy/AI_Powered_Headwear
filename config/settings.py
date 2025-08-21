@@ -109,7 +109,7 @@ command_labels = [
     "get_device_id", "get_device_id", "get_device_id", "get_device_id"
 ]
 COMMAND_CLASSES = [
-    "background", "reading", "start", "stop", "reset", "count",
+    "background", "reading", "start", "stop", "reset",
     "current_location", "navigate", "bookmark_location", "save_contact",
     "send_money", "time", "hotspots", "chat", "shutdown",
     "get_contact", "emergency_mode", "describe_scene", "get_device_id"

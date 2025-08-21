@@ -12,7 +12,7 @@ load_dotenv()
 
 # Constants
 GHANA_NLP_API = os.getenv("GHANA_NLP_API")
-ASR_URL = "https://translation-api.ghananlp.org/asr/v1/transcribe"
+ASR_URL = "https://translation-api.ghananlp.org/asr/v1/transcribe?language=tw"
 
 
 def record_audio(filename="data/twi_audio.wav", duration=2, fs=44100):
@@ -35,16 +35,11 @@ def transcribe_audio(file_path: str, language: str = "tw") -> str:
         "Content-Type": "audio/mpeg"
     }
 
-    params = {
-        "language": language
-    }
-
     try:
         with open(file_path, "rb") as audio_file:
             response = requests.post(
                 ASR_URL,
                 headers=headers,
-                params=params,
                 data=audio_file
             )
 
@@ -61,10 +56,14 @@ def transcribe_audio(file_path: str, language: str = "tw") -> str:
 def record_and_transcribe(language="tw", duration=4):
     wav_file = "audio_capture/user_command.wav"
     mp3_file = "audio_capture/twi_audio.mp3"
+    # wav_file = "user_command.wav"
+    # mp3_file = "twi_audio.mp3"
     record_audio(wav_file, duration)
     convert_wav_to_mp3(wav_file, mp3_file)
-    transcribed_text = transcribe_audio(mp3_file, language)
+    transcribed_text = transcribe_audio(mp3_file, "ak")
+    print('Transcribed text: ', transcribed_text)
     translated_text = translate_text(transcribed_text, lang="tw-en")
+    print('translated text ', translated_text)
     return translated_text
 
 # transcription = record_and_transcribe(language="tw", duration=2)

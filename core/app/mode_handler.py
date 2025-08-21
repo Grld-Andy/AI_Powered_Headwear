@@ -80,7 +80,7 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
         return frame, "stop"
 
     elif current_mode == "current_location":
-        say_in_language(f"Your current location is {reverse_geocode_coordinates(5.304704,-2.002229)}", language, wait_for_completion=True)
+        say_in_language(f"Your current location is {reverse_geocode_coordinates(5.2984, -2.0013)}", language, wait_for_completion=True)
         return frame, "stop"
 
     elif current_mode == "chat":

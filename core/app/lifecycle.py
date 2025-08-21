@@ -149,6 +149,7 @@ def run_main_loop():
                 set_mode(got_mode)
 
         if key == ord('q') or current_mode == "shutdown":
+            say_in_language('Shutting down', get_language(), wait_for_completion=True)
             break
 
         # Handle mode logic

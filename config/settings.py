@@ -12,7 +12,7 @@ cached_depth_vis = None
 cached_depth_raw = None
 SELECTED_LANGUAGE = ''
 wakeword_processing = False
-pc_Ip = "192.168.137.90"
+pc_Ip = "10.33.6.179"
 
 def get_language():
     global SELECTED_LANGUAGE
@@ -37,8 +37,6 @@ english_training_phrases = [
     "stop everything", "pause the system", "turn off the assistant", "halt all processes",
     # start
     "start detecting objects", "what's in front of me", "what's near me", "look around", "identify the things around",
-    # count
-    "how much money is here", "count the cash", "what amount do I have", "tell me how much this is",
     # reset
     "change language", "reset the system", "start setup again", "switch to another language",
     # current_location
@@ -76,8 +74,6 @@ command_labels = [
     "stop", "stop", "stop", "stop",
     # start
     "start", "start", "start", "start", "start",
-    # count
-    "count", "count", "count", "count",
     # reset
     "reset", "reset", "reset", "reset",
     # current location
@@ -109,7 +105,7 @@ command_labels = [
     "get_device_id", "get_device_id", "get_device_id", "get_device_id"
 ]
 COMMAND_CLASSES = [
-    "background", "reading", "start", "stop", "reset", "count",
+    "background", "reading", "start", "stop", "reset",
     "current_location", "navigate", "bookmark_location", "save_contact",
     "send_money", "time", "hotspots", "chat", "shutdown",
     "get_contact", "emergency_mode", "describe_scene", "get_device_id"

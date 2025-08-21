@@ -4,7 +4,7 @@ import numpy as np
 import requests
 
 # ESP32 URL
-URL = "http://10.156.184.165"
+URL = "http://192.168.137.132"
 AWB = True
 
 # Face recognition and opencv setup

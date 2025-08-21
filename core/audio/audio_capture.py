@@ -120,6 +120,8 @@ audio_lock = threading.Lock()
 
 def play_audio_pi(filename, wait_for_completion=False):
     """Play audio on Raspberry Pi without overlapping using pygame."""
+    if 'scene_description' in filename:
+        filename = './data/twi/scene_description.wav'
     if not os.path.isfile(filename):
         print(f"[ERROR] File not found: {filename}")
         return

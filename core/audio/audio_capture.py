@@ -1,5 +1,6 @@
 import os
 import time
+import pygame
 import librosa
 import threading
 import numpy as np
@@ -113,18 +114,26 @@ def record_audio(path=None, duration=3, fs=DEFAULT_FS, device=DEFAULT_DEVICE):
         return None
 
 
+pygame.mixer.init()
+
 audio_lock = threading.Lock()
+
 def play_audio_pi(filename, wait_for_completion=False):
-    """Play audio on Raspberry Pi without overlapping."""
+    """Play audio on Raspberry Pi without overlapping using pygame."""
     if not os.path.isfile(filename):
         print(f"[ERROR] File not found: {filename}")
         return
 
     def _play():
         try:
-            audio = AudioSegment.from_file(filename)
-            with audio_lock:  # Wait here if another audio is playing
-                play(audio)
+            with audio_lock:  # prevent overlapping
+                pygame.mixer.music.load(filename)
+                pygame.mixer.music.play()
+
+                # Wait until playback finishes
+                while pygame.mixer.music.get_busy():
+                    pygame.time.Clock().tick(10)
+
         except Exception as e:
             print(f"[ERROR] Could not play audio {filename}: {e}")
 

@@ -36,9 +36,9 @@ def button_listener_thread():
             print("[BUTTON] Start mode")
             set_mode("start")
 
-        elif buttons["stop"].is_pressed and get_mode() != "stop":
-            print("[BUTTON] Stop mode")
-            set_mode("stop")
+        elif buttons["emergency"].is_pressed and get_mode() != "emergency":
+            print("[BUTTON] Emergency mode")
+            set_mode("emergency")
 
         elif buttons["reading"].is_pressed and get_mode() != "reading":
             print("[BUTTON] Reading mode")

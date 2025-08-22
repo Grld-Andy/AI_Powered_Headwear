@@ -93,14 +93,14 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "emergency_mode":
         audio_path = "./data/audio_capture/emergency_audio.wav"
-        listen_and_save(audio_path, duration=5)
+        message = listen_and_save(audio_path, duration=5)
         send_emergency_alert(
             device_id=get_device_id(),
             alert_type="Emergency",
             severity="critical",
             latitude=5.304704,
             longitude=-2.002229,
-            message=f"Fall detected at {current_time}",
+            message=message,
             audio_path=audio_path
         )
         return frame, "stop"

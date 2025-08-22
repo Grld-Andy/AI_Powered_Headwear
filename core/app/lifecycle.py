@@ -75,7 +75,10 @@ def initialize_app():
     set_language(detect_or_load_language())
     SELECTED_LANGUAGE = get_language()
     print("Selected language:", SELECTED_LANGUAGE)
-    say_in_language("Hello", SELECTED_LANGUAGE, wait_for_completion=True)
+    if SELECTED_LANGUAGE == 'twi':
+        say_in_language("Welcome", SELECTED_LANGUAGE, wait_for_completion=True)
+    else:
+        say_in_language("Hello", SELECTED_LANGUAGE, wait_for_completion=True)
 
     AUDIO_COMMAND_MODEL = load_model(f"./models/{SELECTED_LANGUAGE}/command_classifier.keras")
 

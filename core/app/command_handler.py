@@ -11,7 +11,7 @@ def handle_command(language):
 
     if command != "background":
         confirm_command(language, command)
-        say_in_language(f"{command.capitalize()} mode activated.", language, wait_for_completion=True)
+        say_in_language(f"You said {command.replace('_', ' ')}", language, wait_for_completion=True)
         return command, transcribed_text
     else:
         say_in_language("Switching to default mode.", language, wait_for_completion=True)

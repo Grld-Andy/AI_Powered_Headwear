@@ -4,7 +4,6 @@ import time
 from collections import Counter
 from config.settings import (
     FRAME_INTERVAL, DEPTH_INTERVAL,
-    translated_labels, translated_numbers,
     wakeword_detected
 )
 from config.load_models import yolo_model
@@ -16,6 +15,15 @@ from utils.say_in_language import say_in_language
 # Load depth model
 midas_net = load_depth_model()
 stop_vision = threading.Event()
+
+# Region → natural speech mapping
+REGION_MAP = {
+    "middle": "in front of you",
+    "middle-left": "slightly to the left",
+    "middle-right": "slightly to the right",
+    "leftmost": "to your left",
+    "rightmost": "to your right"
+}
 
 
 # Shared state wrapper
@@ -59,10 +67,17 @@ def handle_vision_mode(frame, language, state: VisionState, passive=False):
         state.last_depth_time = current_time
 
     close_objects = []
-    stack_w = small_frame.shape[1] // 3
-    stack_close = {"left": False, "middle": False, "right": False}
-    stack_objects = {"left": [], "middle": [], "right": []}
+    stack_w = small_frame.shape[1] // 5  # divide into 5 regions
+    stack_names = ["leftmost", "middle-left", "middle", "middle-right", "rightmost"]
+    stack_close = {name: False for name in stack_names}
+    stack_objects = {name: [] for name in stack_names}
 
+    # ---- Draw region division lines ----
+    for i in range(1, 5):
+        x = i * stack_w
+        cv2.line(small_frame, (x, 0), (x, small_frame.shape[0]), (255, 255, 0), 2)  # Cyan lines
+
+    # ---- Object detection classification by region ----
     for det in detections:
         conf = det['confidence']
         if conf < 0.65:
@@ -76,25 +91,21 @@ def handle_vision_mode(frame, language, state: VisionState, passive=False):
         if class_id in [4, 8, 10, 16, 17, 18, 19, 20, 21, 22, 23, 61, 78]:
             continue
 
-        # Figure out which region (left/middle/right)
+        # Figure out which region (leftmost → rightmost)
         center_x = (x1 + x2) // 2
-        if center_x < stack_w:
-            stack = "left"
-        elif center_x < 2 * stack_w:
-            stack = "middle"
-        else:
-            stack = "right"
+        region_idx = min(center_x // stack_w, 4)
+        stack = stack_names[region_idx]
 
         # Mark close objects if depth is small
         object_depth_roi = state.cached_depth_raw[y1:y2, x1:x2]
         if object_depth_roi.size and object_depth_roi.min() < 200:
             stack_close[stack] = True
-            stack_objects[stack].append(class_name)
+            stack_objects[stack].append((class_name, stack))
             close_objects.append(class_name)
             label = f"{class_name} {conf:.2f} - CLOSE!"
             color = (0, 0, 255)  # Red
         else:
-            stack_objects[stack].append(class_name)
+            stack_objects[stack].append((class_name, stack))
             label = f"{class_name} {conf:.2f}"
             color = (0, 255, 0)  # Green
 
@@ -103,59 +114,83 @@ def handle_vision_mode(frame, language, state: VisionState, passive=False):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
     # --- Navigation Guidance ---
-    nav_message = None
-    if stack_close["middle"]:
-        announce_detected_objects(language, stack_objects["middle"])
+    nav_message = ""
 
-        # Measure free space using depth info
+    # If middle blocked → apply new logic
+    if stack_close["middle"]:
         lane_clearance = {}
         h, w = state.cached_depth_raw.shape
-        lane_width = w // 3
+        lane_width = w // 5
 
-        for lane, i in zip(["left", "middle", "right"], range(3)):
+        for lane, i in zip(stack_names, range(5)):
             x1, x2 = i * lane_width, (i + 1) * lane_width
             roi = state.cached_depth_raw[:, x1:x2]
-            if roi.size > 0:
-                # Larger min depth → safer
-                lane_clearance[lane] = roi.min()
-            else:
-                lane_clearance[lane] = 0
+            lane_clearance[lane] = roi.min() if roi.size > 0 else 0
 
-        # Decide safest lane
-        safest_lane = max(lane_clearance, key=lane_clearance.get)
-        if safest_lane == "left" and lane_clearance["left"] - lane_clearance["middle"] > 100:
+        # Check best safe alternative
+        if not stack_close["leftmost"]:
             nav_message = "Move to your left, it is safer."
-        elif safest_lane == "right" and lane_clearance["right"] - lane_clearance["middle"] > 100:
+        elif not stack_close["rightmost"]:
             nav_message = "Move to your right, it is safer."
+        elif not stack_close["middle-left"]:
+            nav_message = "Move slightly left, it is safer."
+        elif not stack_close["middle-right"]:
+            nav_message = "Move slightly right, it is safer."
         else:
-            nav_message = "Please stop, obstacle ahead."
+            # Both sides blocked → pick based on clearance
+            left_clear = lane_clearance["middle-left"] + lane_clearance["leftmost"]
+            right_clear = lane_clearance["middle-right"] + lane_clearance["rightmost"]
 
-        if nav_message:
-            say_in_language(nav_message, language, wait_for_completion=False, volume=get_volume())
+            if left_clear > right_clear and left_clear - lane_clearance["middle"] > 100:
+                nav_message = "Try moving left, it looks safer."
+            elif right_clear > left_clear and right_clear - lane_clearance["middle"] > 100:
+                nav_message = "Try moving right, it looks safer."
+            else:
+                nav_message = "Please stop, obstacles ahead."
+
+        announce_detected_objects(language, stack_objects, nav_message)
 
     else:
-        all_objects = stack_objects["left"] + stack_objects["middle"] + stack_objects["right"]
-        if all_objects:
-            announce_detected_objects(language, all_objects)
+        # Middle clear → announce objects + give suggestion if one side is blocked
+        if stack_close["middle-left"] and not stack_close["middle-right"]:
+            nav_message = "Keep slightly to your right, it is safer."
+        elif stack_close["middle-right"] and not stack_close["middle-left"]:
+            nav_message = "Keep slightly to your left, it is safer."
 
-    # Display output
+        all_objects = []
+        for lane in stack_names:
+            all_objects += stack_objects[lane]
+        if all_objects:
+            announce_detected_objects(language, stack_objects, nav_message)
+
     if not passive:
         cv2.imshow("Camera View", small_frame)
 
     return small_frame, state.cached_depth_raw, state.last_frame_time, state.last_depth_time
 
 
-def announce_detected_objects(language, objects):
+def announce_detected_objects(language, stack_objects, nav_message=""):
+    # stack_objects is a dict {region: [(class_name, region), ...]}
     parts = []
-    counts = Counter(objects)
-    for kind, count in counts.items():
-        parts.append(f"{count} {kind}" + ("s" if count > 1 else ""))
+    flat_list = []
+    for lane, objs in stack_objects.items():
+        for obj, region in objs:
+            flat_list.append((obj, region))
+
+    # Count objects by (class, region)
+    counts = Counter(flat_list)
+    for (kind, region), count in counts.items():
+        region_label = REGION_MAP.get(region, region)
+        parts.append(f"{count} {kind}" + ("s" if count > 1 else "") + f" {region_label}")
 
     if not parts:
         return
 
     sentence = ", ".join(parts[:-1]) + ", and " + parts[-1] if len(parts) > 1 else parts[0]
-    sentence += " in front of you"
+    if not nav_message:
+        sentence += "."
+    else:
+        sentence += f". {nav_message}"
 
     if not wakeword_detected.is_set():
         threading.Thread(

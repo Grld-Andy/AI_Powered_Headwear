@@ -136,7 +136,7 @@ DATABASE = 'database.db'
 BASE_URL = f'http://{pc_Ip}:3000'
 API_BASE_URL = f"http://{pc_Ip}:3000/api"
 
-current_mode = "stop"
+current_mode = "start"
 def get_mode():
     global current_mode
     return current_mode

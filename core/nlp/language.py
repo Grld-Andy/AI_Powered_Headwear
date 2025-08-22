@@ -4,12 +4,11 @@ from core.audio.audio_capture import predict_audio, record_audio
 import config.settings as settings
 from config.settings import LANG_AUDIO_FILE, LANGUAGES
 import config.load_models as load_models_config
-from core.database.database import get_device_id, setup_db, get_saved_language, save_language
+from core.database.database import get_device_id, get_saved_language, save_language
 from utils.say_in_language import say_in_language
 
 
 def detect_or_load_language():
-    setup_db()
     lang = get_saved_language()
     return lang if lang else set_preferred_language()
 

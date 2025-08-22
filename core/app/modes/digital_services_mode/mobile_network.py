@@ -67,7 +67,7 @@ def try_listen_with_retries(prompt_text, language, retries=2):
         if attempt > 0:
             say_in_language("Please try again.", language, wait_for_completion=True)
         say_in_language(prompt_text, language, wait_for_completion=True)
-        response = listen()
+        response = listen("./data/audio_capture/mobile_network.wav", language=language, duration=5, fs=16000, device=None)
         if response:
             return response
     return None

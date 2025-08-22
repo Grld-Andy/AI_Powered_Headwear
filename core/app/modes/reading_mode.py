@@ -1,36 +1,53 @@
 import cv2
 import numpy as np
-from core.vision.ocr import ocr_space_file
 from utils.say_in_language import say_in_language
+from google.generativeai import upload_file, GenerativeModel
+import os
+import re
 
+# Clean text extracted from image
+def clean_response(text: str) -> str:
+    if not text:
+        return ""
+    text = re.sub(r"[\U00010000-\U0010ffff]", "", text)  # remove emojis
+    text = re.sub(r"[^a-zA-Z0-9\s.,;:'\"!?-]", "", text)  # remove weird chars
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
-def handle_reading_mode(frame, language, _):  # frozen_frame no longer needed
+def handle_reading_mode(frame, language, _):  # same signature
+    """Extracts text from the given frame using Google Gemini."""
     print("Reading mode activated")
 
     if frame is None or not isinstance(frame, np.ndarray):
         say_in_language("No valid image to read.", language, wait_for_completion=True)
         return None, "start"
 
-    # Resize for display/OCR consistency
+    # Resize frame for consistency
     frame = cv2.resize(frame, (640, 480))
     cv2.imshow("Camera View", frame)
     cv2.waitKey(1)
 
-    # Save frame to disk for OCR
-    cv2.imwrite("data/captured_image.png", frame)
+    # Save frame to disk
+    temp_image_path = "data/captured_image.png"
+    os.makedirs("data", exist_ok=True)
+    cv2.imwrite(temp_image_path, frame)
 
+    extracted_text = ""
     try:
-        print("Extracting text")
-        text = ocr_space_file("data/captured_image.png").strip()
-        print("Extracted text:", text)
+        # Upload image and get extracted text
+        uploaded_file = upload_file(temp_image_path)
+        model = GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content([
+            {"role": "user", "parts": ["Extract all text from this image.", uploaded_file]}
+        ])
+        extracted_text = clean_response(response.text)
+        print("Extracted text:", extracted_text)
     except Exception as e:
-        print("OCR Error:", e)
-        text = ""
+        print("Text extraction error:", e)
 
-    if text:
-        say_in_language(f"Reading now. {text}. Done reading.", language, wait_for_completion=True)
+    if extracted_text:
+        say_in_language(f"Reading now. {extracted_text}. Done reading.", language, wait_for_completion=True)
     else:
         say_in_language("No text found.", language, wait_for_completion=True)
 
-    # Return to 'start' mode either way
-    return frame, "start"
+    return frame, extracted_text

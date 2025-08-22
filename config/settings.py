@@ -125,7 +125,7 @@ INTENT_CLASSIFIER_MODEL = "./models/knn_classifier.joblib"
 # # Load models
 # LANG_MODEL = load_model(LANG_MODEL_PATH)
 # yolo_model = YOLO("./models/yolov5n.pt")
-CAMERA_IP = "192.168.137.216"
+CAMERA_IP = "192.168.137.247"
 MJPEG_PORT = 81
 MJPEG_URL = f"http://{CAMERA_IP}:{MJPEG_PORT}/stream"
 cap = cv2.VideoCapture(MJPEG_URL)

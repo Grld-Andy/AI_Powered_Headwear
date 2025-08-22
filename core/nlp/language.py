@@ -29,18 +29,18 @@ def set_preferred_language():
     try:
         LANG_AUDIO_FILE = "./data/choosing_language.wav"
         print("[LANG] Listening via laptop microphone...", LANG_AUDIO_FILE)
-        # record_audio(LANG_AUDIO_FILE, duration=3)  # Record 3 seconds
+        # record_audio(LANG_AUDIO_FILE, duration=3)  # Uncomment to record
 
-        # Step 3: Predict language from recorded audio
-        lang, confidence = predict_audio(LANG_AUDIO_FILE, load_models_config.LANG_MODEL, LANGUAGES)
-        print(f"[LANG] You said {lang}, I am {confidence * 100:.2f}% confident")
+        # Step 3: Predict text from recorded audio
+        recognized_text, confidence = predict_audio(LANG_AUDIO_FILE, load_models_config.LANG_MODEL, LANGUAGES)
+        print(f"[LANG] Recognized text: {recognized_text}")
 
-        if lang in ('english', 'twi'):
-            say_in_language(f"You said {lang}", lang, wait_for_completion=True)
-        else:
+        # Step 4: Determine language based on text content
+        if 'english' in recognized_text.lower():
             lang = 'english'
-            say_in_language(f"Could not understand, using {lang}", lang, wait_for_completion=True)
-
+        else:
+            lang = 'twi'
+        say_in_language(f"You selected {lang}", lang, wait_for_completion=True)
         save_language(lang)
         return lang
 

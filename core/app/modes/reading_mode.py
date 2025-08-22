@@ -15,12 +15,12 @@ def clean_response(text: str) -> str:
     return text
 
 def handle_reading_mode(frame, language, _):  # same signature
-    """Extracts text from the given frame using Google Gemini."""
+    """Extracts only text from the given frame using Google Gemini."""
     print("Reading mode activated")
 
     if frame is None or not isinstance(frame, np.ndarray):
         say_in_language("No valid image to read.", language, wait_for_completion=True)
-        return None, "start"
+        return None, ""
 
     # Resize frame for consistency
     frame = cv2.resize(frame, (640, 480))
@@ -34,19 +34,20 @@ def handle_reading_mode(frame, language, _):  # same signature
 
     extracted_text = ""
     try:
-        # Upload image and get extracted text
+        # Upload image and get only text
         uploaded_file = upload_file(temp_image_path)
         model = GenerativeModel("gemini-1.5-flash")
         response = model.generate_content([
-            {"role": "user", "parts": ["Extract all text from this image.", uploaded_file]}
+            {"role": "user", "parts": ["Extract only the text content from this image. Do not describe the scene.", uploaded_file]}
         ])
         extracted_text = clean_response(response.text)
         print("Extracted text:", extracted_text)
     except Exception as e:
         print("Text extraction error:", e)
 
+    # Speak the text directly without extra words
     if extracted_text:
-        say_in_language(f"Reading now. {extracted_text}. Done reading.", language, wait_for_completion=True)
+        say_in_language(extracted_text, language, wait_for_completion=True)
     else:
         say_in_language("No text found.", language, wait_for_completion=True)
 

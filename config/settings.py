@@ -12,7 +12,7 @@ cached_depth_vis = None
 cached_depth_raw = None
 SELECTED_LANGUAGE = ''
 wakeword_processing = False
-pc_Ip = "192.168.1.80"
+pc_Ip = "172.20.10.3"
 
 def get_language():
     global SELECTED_LANGUAGE

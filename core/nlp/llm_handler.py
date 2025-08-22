@@ -6,6 +6,7 @@ from core.nlp.llm_together_ai import chat_with_gemini
 from core.tts.piper import send_text_to_tts
 from twi_stuff.eng_to_twi import translate_text
 from twi_stuff.translate_and_say import translate_and_play
+from utils.say_in_language import say_in_language
 
 OLLAMA_URL = f"http://{pc_Ip}:11434/api/generate"
 MODEL_NAME = "tinyllama"
@@ -60,6 +61,7 @@ def handle_chat_mode(duration: int = 2) -> str:
         print(f"🗣️ User said: {transcribed_text}")
         if "exit" in transcribed_text.lower() or "close" in transcribed_text.lower():
             set_mode("stop")
+            say_in_language("Goodbye!", SELECTED_LANGUAGE, wait_for_completion=True)
             return "Goodbye!"
         response = chat_with_gemini(transcribed_text)
 

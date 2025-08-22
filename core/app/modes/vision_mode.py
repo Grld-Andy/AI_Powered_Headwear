@@ -43,6 +43,10 @@ def run_background_vision(frame_func, language_func, state: VisionState):
         if frame is None:
             time.sleep(FRAME_INTERVAL)
             continue
+
+        # 🔄 Rotate frame by 90 degrees clockwise before processing
+        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+
         _ = handle_vision_mode(
             frame, language,
             state, passive=True
@@ -57,6 +61,8 @@ def handle_vision_mode(frame, language, state: VisionState, passive=False):
         return state.cached_depth_vis, state.cached_depth_raw, state.last_frame_time, state.last_depth_time
 
     state.last_frame_time = current_time
+
+    # 🔄 Ensure rotated frame is resized for processing
     small_frame = cv2.resize(frame, (640, 480))
     detections = run_object_detection(small_frame)
 
@@ -164,6 +170,7 @@ def handle_vision_mode(frame, language, state: VisionState, passive=False):
             announce_detected_objects(language, stack_objects, nav_message)
 
     if not passive:
+        # 🔄 Show rotated frame
         cv2.imshow("Camera View", small_frame)
 
     return small_frame, state.cached_depth_raw, state.last_frame_time, state.last_depth_time

@@ -10,6 +10,7 @@ def handle_command(language):
     command, transcribed_text = predict_command("audio_capture/user_command.wav", language, duration=3)
 
     if command != "background":
+        say_in_language(f"You said {command.replace('_', ' ')}", language, wait_for_completion=True)
         confirm_command(language, command)
         return command, transcribed_text
     else:

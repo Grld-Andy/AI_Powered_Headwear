@@ -32,13 +32,16 @@ def button_listener_thread():
 
         elif buttons["start"].is_pressed and get_mode() != "start":
             print("[BUTTON] Start mode")
+            say_in_language("Object detection mode started", get_language(), priority=1, wait_for_completion=True)
             set_mode("start")
 
         elif buttons["emergency_mode"].is_pressed and get_mode() != "emergency_mode":
+            say_in_language("Emergency mode activated. Please describe the situation.", get_language(), wait_for_completion=True)
             print("[BUTTON] Emergency mode")
             set_mode("emergency_mode")
 
         elif buttons["reading"].is_pressed and get_mode() != "reading":
+            say_in_language("Reading mode started", get_language(), priority=1, wait_for_completion=True)
             print("[BUTTON] Reading mode")
             set_mode("reading")
 

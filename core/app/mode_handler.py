@@ -93,7 +93,6 @@ def process_mode(current_mode, frame, language, last_frame_time, last_depth_time
 
     elif current_mode == "emergency_mode":
         audio_path = "./data/audio_capture/emergency_audio.wav"
-        say_in_language("Emergency mode activated. Please describe the situation.", language, wait_for_completion=True)
         listen_and_save(audio_path, duration=5)
         send_emergency_alert(
             device_id=get_device_id(),
